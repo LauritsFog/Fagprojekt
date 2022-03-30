@@ -94,7 +94,7 @@ Ts = sampling time = 5 min
 %}
  
 
-                        % Closed loop simulation
+                        % Closed loop simulation 
 
 % Steady state vector
 X_steady = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
@@ -173,7 +173,7 @@ set(f,'Position',[100 200 1100 700]);
 
 % Start glucose concentration er nu på steady state
 x0 = X_steady;
-x0(4) = 200;
+% x0(4) = 200;
 
 % Step size
 Ts = 5;
@@ -980,9 +980,48 @@ t(2000) = 107.731
 - peak lidt lavere end 180
 %}
 
+%% test opgave 1
+
+clear;clc;
+
+%{
+x0 = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
+Ts = 5;
+nd = 2;
+r = 108;
+us = 25.04;
+Nsteps = 500;
+D =zeros(Nsteps,1);
+parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
+%}
+
+x0 = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
+
+% start concentration is 200
+x0(4) = 200;
+
+Ts = 5;
+days = 31;
+
+% Meals: 3 meals a day for a month
+
+D1 = zeros(288,1);
+D1(96) = 10;  % Måltid kl 8 
+D1(156) = 10; % måltid kl 13
+D1(228) = 10; % Måltid kl 19
+
+D = [];
+
+for i = 1:days
+   
+    D = [D, D1];
+    
+end
 
 
+parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
 
+Simulation(x0,Ts,days,D,parm);
 
 
 
