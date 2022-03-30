@@ -310,10 +310,10 @@ end
 
 % Plot samtlige integrale-værdier over de forskellige bolues størrelser
 figure(2)
-semilogy(U,PHI)
+semilogy(U,PHI,"linewidth",3)
 xlabel("Bolus size (U)","fontsize",fs);
 ylabel("Obejctive function (phi)","fontsize",fs);
-title('Bolus calculator',"fontsize",fs)
+% title('Bolus calculator',"fontsize",fs)
 
 % Det der foregår her er at man spiser et måltid på 100g CHO (dvs 20 når vi
 % arbejder med 5min intevaller). Vi laver så forskellige start insulin
@@ -344,7 +344,7 @@ umax = 30;
 D = 100;
 
 % Function that computes the optimal bolus given the meal size
-OptimalBolus(xs,us,Ts,umax,D,parm)
+uOptimal = OptimalBolus(xs,us,Ts,umax,D,parm);
 
 % This function takes the following input;
     % xs = steady state vector
@@ -372,7 +372,7 @@ Ts = 5;
 % max bolus size
 umax = 50;
 % meal size
-DD=100:5:150;
+DD=50:10:150;
 
 % Emty vector for the optimal boluses
 UOPT = [];
@@ -386,10 +386,18 @@ for D=DD
 end
 
 % Plot the meal size and their optimal bolus
+figure(3)
 plot(DD,UOPT,"linewidth",3)
 xlabel("Meal size (g CHO)","fontsize",fs);
 ylabel("Optimal bolus (U)","fontsize",fs);
-title('Optimal bolus for different meal sizes',"fontsize",fs)
+% title('Optimal bolus for different meal sizes',"fontsize",fs)
+
+% Plotting the optimal solution for D = 100
+
+% hold on
+% plot([DD(6),DD(6)],[16,UOPT(6)],'--','Color','k')
+% plot([50,100],[UOPT(6),UOPT(6)],'--','Color','k')
+% plot(DD(6),UOPT(6),'.','MarkerSize',30,'MarkerFaceColor','red')
 
 %% Problem 7 - Least square fit    
 
