@@ -173,7 +173,6 @@ set(f,'Position',[100 200 1100 700]);
 
 % Start glucose concentration er nu på steady state
 x0 = X_steady;
-x0(4) = 200;
 
 % Step size
 Ts = 5;
@@ -184,7 +183,7 @@ Nsteps = 500;
 
 % Intet måltid
 D=zeros(Nsteps,1);
-D(200) = 10;
+D(1) = 10;
 
 % Initialisering af T og X
 X = [];
@@ -216,7 +215,7 @@ for i=1:Nsteps
     y=x0(4);
 end
 
-                        % Plot af simuleringen
+% Plot af simuleringen
 
 % Plotter glucose concentrationen i blodet
 f = figure(3);
@@ -230,9 +229,9 @@ legend("Glucose concentration","Steady state","location","northeast")
 
 subplot(1,2,2)
 plot(D,"linewidth",3)
-xlabel("t [h]","fontsize",fs+2);
-ylabel("d [g CHO/min]","fontsize",fs+2);
-title('Meal size',"fontsize",fs+2)
+xlabel("t [h]","fontsize",fs);
+ylabel("d [g CHO/min]","fontsize",fs);
+title('Meal size',"fontsize",fs)
 set(f,'Position',[100 200 1100 700]);        
         
                              %% Part 2
@@ -980,6 +979,10 @@ t(2000) = 107.731
 - peak lidt lavere end 180
 %}
 
+%% test
+
+figure(hej)
+plot(topt,xopt(:,4))
 
 
 
