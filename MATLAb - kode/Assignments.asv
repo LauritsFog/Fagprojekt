@@ -286,6 +286,7 @@ for u0=U
     % Laver tomme vectorer
     X=[];
     T=[];
+    
     for i=1:100
         if(i==1) % Laver en anden insulin rate for step 1
             u=us+u0*1000/Ts; % Ny insulin rate
@@ -299,6 +300,7 @@ for u0=U
         X = [X;xtmp];
         T = [T;ttmp];
         x0=xtmp(end,:)';
+
     end
     % Beregner integralet af den glucose koncentrations kurve som fås i
     % det inderste for-loop
@@ -339,7 +341,7 @@ us = 25.04;
 % step size
 Ts = 5;
 % max bolus size
-umax = 30;
+umax = 15;
 % meal size
 D = 100;
 
@@ -370,9 +372,9 @@ us = 25.04;
 % step size
 Ts = 5;
 % max bolus size
-umax = 50;
+umax = 15;
 % meal size
-DD=100:5:150;
+DD=100:2:150;
 
 % Emty vector for the optimal boluses
 UOPT = [];
