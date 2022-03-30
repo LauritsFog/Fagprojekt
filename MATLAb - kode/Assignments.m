@@ -301,7 +301,7 @@ for u0=U
             
         end
         % Løser differentialligningerne
-        [ttmp,xtmp] = ode15s(@MVPmodel,tspan+5*(i-1),x0,[],u,d,parm);
+        [ttmp,xtmp] = ode15s(@MVPModel,tspan+5*(i-1),x0,[],u,d,parm);
         X = [X;xtmp];
         T = [T;ttmp];
         x0=xtmp(end,:)';
