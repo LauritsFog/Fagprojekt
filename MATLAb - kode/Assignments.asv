@@ -94,7 +94,7 @@ Ts = sampling time = 5 min
 %}
  
 
-                        % Closed loop simulation
+                        % Closed loop simulation 
 
 % Steady state vector
 X_steady = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
@@ -173,7 +173,7 @@ set(f,'Position',[100 200 1100 700]);
 
 % Start glucose concentration er nu på steady state
 x0 = X_steady;
-x0(4) = 200;
+% x0(4) = 200;
 
 % Step size
 Ts = 5;
@@ -250,6 +250,7 @@ addpath('Bolus')
 % The function glucosePenaltyFunction(G) takes the glucose concentration af
 % input and is used in the function computeIntegral(T,G) så compute the
 % integral
+    
 
                             % Initialisering
                             
@@ -274,13 +275,14 @@ tspan = [0 Ts];
 % Bliver ikke brugt??
 phi0 = +Inf;
 
-U = 0:1:30;
+U = 0:0.5:20;
 
-D=100;
+D=20;
 
 PHI = [];
 
                                    % Bolus calculations
+                                   
                                    
 for u0=U
     % Laver tomme vectorer
@@ -290,31 +292,35 @@ for u0=U
     for i=1:100
         if(i==1) % Laver en anden insulin rate for step 1
             u=us+u0*1000/Ts; % Ny insulin rate
-            d=D; % Der bliver spist et måltid
+            d=D; % Det bliver spist en måltid
+            
+            
         else % I de 99 andre step er der intet måltid og uændret insulin rate
+            
             u=us;
-            d=0;  
+            d=0;
+            
         end
         % Løser differentialligningerne
-        [ttmp,xtmp] = ode15s(@MVPModel,tspan+5*(i-1),x0,[],u,d,parm);
+        [ttmp,xtmp] = ode15s(@MVPmodel,tspan+5*(i-1),x0,[],u,d,parm);
         X = [X;xtmp];
         T = [T;ttmp];
         x0=xtmp(end,:)';
-
+        
     end
-    % Beregner integralet af den glucose koncentrations kurve som fås i
+    % Beregner integralet af den glucose concentrations kurve som fås i
     % det inderste for-loop
     phi = computeIntegral(T,X(:,4));
     
-    % Smider værdien af det integrale ind i en vektor
+    % Smider værdien af det integrale ind i en vector
     PHI = [PHI;phi];
 end
 
-% Plot samtlige integrale-værdier over de forskellige bolues størrelser
+% Plot samtlige integrale-værdier over de forskellige 
 figure(2)
 semilogy(U,PHI)
-xlabel("Bolus size (U)","fontsize",fs);
-ylabel("Obejctive function (phi)","fontsize",fs);
+xlabel("Bolus size???","fontsize",fs);
+ylabel("Integral-værdi","fontsize",fs);
 title('Bolus calculator',"fontsize",fs)
 
 % Det der foregår her er at man spiser et måltid på 100g CHO (dvs 20 når vi
@@ -326,6 +332,9 @@ title('Bolus calculator',"fontsize",fs)
 
 % af grafen vi får frem ses det at for et måltid på 100g CHO er det bedst
 % at have en bolus på omkring 10-10.5
+
+
+% Integrale-værdier = bolus???
 
 %% Problem 5 - Compute the optimal bolus
 
@@ -343,7 +352,7 @@ Ts = 5;
 % max bolus size
 umax = 15;
 % meal size
-D = 100;
+D = 20;
 
 % Function that computes the optimal bolus given the meal size
 OptimalBolus(xs,us,Ts,umax,D,parm)
@@ -374,7 +383,7 @@ Ts = 5;
 % max bolus size
 umax = 15;
 % meal size
-DD=100:2:150;
+DD=20:2:30;
 
 % Emty vector for the optimal boluses
 UOPT = [];
@@ -389,9 +398,9 @@ end
 
 % Plot the meal size and their optimal bolus
 plot(DD,UOPT,"linewidth",3)
-xlabel("Meal size (g CHO)","fontsize",fs);
-ylabel("Optimal bolus (U)","fontsize",fs);
-title('Optimal bolus for different meal sizes',"fontsize",fs)
+xlabel("Meal Size","fontsize",fs);
+ylabel("Optimal Bolus","fontsize",fs);
+title('Optimal Bolus for differnt meal size',"fontsize",fs)
 
 %% Problem 7 - Least square fit    
 
@@ -971,9 +980,47 @@ t(2000) = 107.731
 - peak lidt lavere end 180
 %}
 
+%% test opgave 1
+
+clear;clc;
+
+%{
+x0 = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
+Ts = 5;
+nd = 2;
+r = 108;
+us = 25.04;
+Nsteps = 500;
+D =zeros(Nsteps,1);
+parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
+%}
+
+x0 = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
+
+% start concentration is 200
+x0(4) = 200;
+
+Ts = 5;
+days = 31;
+
+% Meals: 3 meals a day for a month
+
+D = zeros(288,1);
+D(96) = 10;  % Måltid kl 8 
+D(156) = 10; % måltid kl 13
+D(228) = 10; % Måltid kl 19
+
+for i = 1:days
+   
+    D = [D, ]
+    
+end
 
 
 
+parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
+
+Simulation(x0,Ts,days,D,parm);
 
 
 
