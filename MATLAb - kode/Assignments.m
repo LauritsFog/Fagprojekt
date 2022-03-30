@@ -250,7 +250,6 @@ addpath('Bolus')
 % The function glucosePenaltyFunction(G) takes the glucose concentration af
 % input and is used in the function computeIntegral(T,G) så compute the
 % integral
-    
 
                             % Initialisering
                             
@@ -275,52 +274,45 @@ tspan = [0 Ts];
 % Bliver ikke brugt??
 phi0 = +Inf;
 
-U = 0:0.5:20;
+U = 0:1:30;
 
-D=20;
+D=100;
 
 PHI = [];
 
                                    % Bolus calculations
                                    
-                                   
 for u0=U
     % Laver tomme vectorer
     X=[];
     T=[];
-    
     for i=1:100
         if(i==1) % Laver en anden insulin rate for step 1
             u=us+u0*1000/Ts; % Ny insulin rate
-            d=D; % Det bliver spist en måltid
-            
-            
+            d=D; % Der bliver spist et måltid
         else % I de 99 andre step er der intet måltid og uændret insulin rate
-            
             u=us;
-            d=0;
-            
+            d=0;  
         end
         % Løser differentialligningerne
-        [ttmp,xtmp] = ode15s(@MVPmodel,tspan+5*(i-1),x0,[],u,d,parm);
+        [ttmp,xtmp] = ode15s(@MVPModel,tspan+5*(i-1),x0,[],u,d,parm);
         X = [X;xtmp];
         T = [T;ttmp];
         x0=xtmp(end,:)';
-        
     end
-    % Beregner integralet af den glucose concentrations kurve som fås i
+    % Beregner integralet af den glucose koncentrations kurve som fås i
     % det inderste for-loop
     phi = computeIntegral(T,X(:,4));
     
-    % Smider værdien af det integrale ind i en vector
+    % Smider værdien af det integrale ind i en vektor
     PHI = [PHI;phi];
 end
 
-% Plot samtlige integrale-værdier over de forskellige 
+% Plot samtlige integrale-værdier over de forskellige bolues størrelser
 figure(2)
 semilogy(U,PHI)
-xlabel("Bolus size???","fontsize",fs);
-ylabel("Integral-værdi","fontsize",fs);
+xlabel("Bolus size (U)","fontsize",fs);
+ylabel("Obejctive function (phi)","fontsize",fs);
 title('Bolus calculator',"fontsize",fs)
 
 % Det der foregår her er at man spiser et måltid på 100g CHO (dvs 20 når vi
@@ -332,9 +324,6 @@ title('Bolus calculator',"fontsize",fs)
 
 % af grafen vi får frem ses det at for et måltid på 100g CHO er det bedst
 % at have en bolus på omkring 10-10.5
-
-
-% Integrale-værdier = bolus???
 
 %% Problem 5 - Compute the optimal bolus
 
@@ -350,9 +339,9 @@ us = 25.04;
 % step size
 Ts = 5;
 % max bolus size
-umax = 15;
+umax = 30;
 % meal size
-D = 20;
+D = 100;
 
 % Function that computes the optimal bolus given the meal size
 OptimalBolus(xs,us,Ts,umax,D,parm)
@@ -381,9 +370,9 @@ us = 25.04;
 % step size
 Ts = 5;
 % max bolus size
-umax = 15;
+umax = 50;
 % meal size
-DD=20:2:30;
+DD=100:5:150;
 
 % Emty vector for the optimal boluses
 UOPT = [];
@@ -398,9 +387,9 @@ end
 
 % Plot the meal size and their optimal bolus
 plot(DD,UOPT,"linewidth",3)
-xlabel("Meal Size","fontsize",fs);
-ylabel("Optimal Bolus","fontsize",fs);
-title('Optimal Bolus for differnt meal size',"fontsize",fs)
+xlabel("Meal size (g CHO)","fontsize",fs);
+ylabel("Optimal bolus (U)","fontsize",fs);
+title('Optimal bolus for different meal sizes',"fontsize",fs)
 
 %% Problem 7 - Least square fit    
 
