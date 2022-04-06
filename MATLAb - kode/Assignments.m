@@ -985,38 +985,31 @@ parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
 %}
 
 x0 = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
+parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
 
-% start concentration is 200
-x0(4) = 200;
 
 Ts = 5;
 days = 31;
 
-% Meals: 3 meals a day for a month
 
 D1 = zeros(288,1);
-D1(96) = 10;  % Måltid kl 8 
-D1(156) = 10; % måltid kl 13
-D1(228) = 10; % Måltid kl 19
-
+D1(96) = 10;
+D1(156) = 10;
+D1(228) = 10;
 D = [];
 
 for i = 1:days
-   
-    D = [D, D1];
-    
+    D = [D; D1]; 
 end
 
 
-parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
+% meal vector:
+% D = MealPlan(days);
 
-Simulation(x0,Ts,days,D,parm);
+load('MealPlan.mat')
 
-
-
-
-
-
+% Simulation af et menneske i 7 dage
+Simulation(x0,Ts,days,D31,parm);
 
 
 

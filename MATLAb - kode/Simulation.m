@@ -70,7 +70,6 @@ plot(D,"linewidth",3)
 xlabel("t [min]","fontsize",fs);
 ylabel("d [g CHO/min]","fontsize",fs);
 title('Meal size',"fontsize",fs)
-set(f,'Position',[100 200 1100 700]);
 
 
 end
