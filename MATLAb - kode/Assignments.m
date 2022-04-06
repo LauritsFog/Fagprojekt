@@ -94,7 +94,7 @@ Ts = sampling time = 5 min
 %}
  
 
-                        % Closed loop simulation
+                        % Closed loop simulation 
 
 % Steady state vector
 X_steady = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
@@ -173,7 +173,7 @@ set(f,'Position',[100 200 1100 700]);
 
 % Start glucose concentration er nu på steady state
 x0 = X_steady;
-x0(4) = 200;
+% x0(4) = 200;
 
 % Step size
 Ts = 5;
@@ -250,7 +250,6 @@ addpath('Bolus')
 % The function glucosePenaltyFunction(G) takes the glucose concentration af
 % input and is used in the function computeIntegral(T,G) så compute the
 % integral
-    
 
                             % Initialisering
                             
@@ -275,53 +274,46 @@ tspan = [0 Ts];
 % Bliver ikke brugt??
 phi0 = +Inf;
 
-U = 0:0.5:20;
+U = 0:1:30;
 
-D=20;
+D=100;
 
 PHI = [];
 
                                    % Bolus calculations
                                    
-                                   
 for u0=U
     % Laver tomme vectorer
     X=[];
     T=[];
-    
     for i=1:100
         if(i==1) % Laver en anden insulin rate for step 1
             u=us+u0*1000/Ts; % Ny insulin rate
-            d=D; % Det bliver spist en måltid
-            
-            
+            d=D; % Der bliver spist et måltid
         else % I de 99 andre step er der intet måltid og uændret insulin rate
-            
             u=us;
-            d=0;
-            
+            d=0;  
         end
         % Løser differentialligningerne
-        [ttmp,xtmp] = ode15s(@MVPmodel,tspan+5*(i-1),x0,[],u,d,parm);
+        [ttmp,xtmp] = ode15s(@MVPModel,tspan+5*(i-1),x0,[],u,d,parm);
         X = [X;xtmp];
         T = [T;ttmp];
         x0=xtmp(end,:)';
-        
     end
-    % Beregner integralet af den glucose concentrations kurve som fås i
+    % Beregner integralet af den glucose koncentrations kurve som fås i
     % det inderste for-loop
     phi = computeIntegral(T,X(:,4));
     
-    % Smider værdien af det integrale ind i en vector
+    % Smider værdien af det integrale ind i en vektor
     PHI = [PHI;phi];
 end
 
-% Plot samtlige integrale-værdier over de forskellige 
+% Plot samtlige integrale-værdier over de forskellige bolues størrelser
 figure(2)
-semilogy(U,PHI)
-xlabel("Bolus size???","fontsize",fs);
-ylabel("Integral-værdi","fontsize",fs);
-title('Bolus calculator',"fontsize",fs)
+semilogy(U,PHI,"linewidth",3)
+xlabel("Bolus size (U)","fontsize",fs);
+ylabel("Obejctive function (phi)","fontsize",fs);
+% title('Bolus calculator',"fontsize",fs)
 
 % Det der foregår her er at man spiser et måltid på 100g CHO (dvs 20 når vi
 % arbejder med 5min intevaller). Vi laver så forskellige start insulin
@@ -332,9 +324,6 @@ title('Bolus calculator',"fontsize",fs)
 
 % af grafen vi får frem ses det at for et måltid på 100g CHO er det bedst
 % at have en bolus på omkring 10-10.5
-
-
-% Integrale-værdier = bolus???
 
 %% Problem 5 - Compute the optimal bolus
 
@@ -350,12 +339,12 @@ us = 25.04;
 % step size
 Ts = 5;
 % max bolus size
-umax = 15;
+umax = 30;
 % meal size
-D = 20;
+D = 100;
 
 % Function that computes the optimal bolus given the meal size
-OptimalBolus(xs,us,Ts,umax,D,parm)
+uOptimal = OptimalBolus(xs,us,Ts,umax,D,parm);
 
 % This function takes the following input;
     % xs = steady state vector
@@ -381,9 +370,9 @@ us = 25.04;
 % step size
 Ts = 5;
 % max bolus size
-umax = 15;
+umax = 50;
 % meal size
-DD=20:2:30;
+DD=50:10:150;
 
 % Emty vector for the optimal boluses
 UOPT = [];
@@ -397,10 +386,18 @@ for D=DD
 end
 
 % Plot the meal size and their optimal bolus
+figure(3)
 plot(DD,UOPT,"linewidth",3)
-xlabel("Meal Size","fontsize",fs);
-ylabel("Optimal Bolus","fontsize",fs);
-title('Optimal Bolus for differnt meal size',"fontsize",fs)
+xlabel("Meal size (g CHO)","fontsize",fs);
+ylabel("Optimal bolus (U)","fontsize",fs);
+% title('Optimal bolus for different meal sizes',"fontsize",fs)
+
+% Plotting the optimal solution for D = 100
+
+% hold on
+% plot([DD(6),DD(6)],[16,UOPT(6)],'--','Color','k')
+% plot([50,100],[UOPT(6),UOPT(6)],'--','Color','k')
+% plot(DD(6),UOPT(6),'.','MarkerSize',30,'MarkerFaceColor','red')
 
 %% Problem 7 - Least square fit    
 
@@ -980,15 +977,47 @@ t(2000) = 107.731
 - peak lidt lavere end 180
 %}
 
+%% test opgave 1
+
+clear;clc;
+
+%{
+x0 = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
+Ts = 5;
+nd = 2;
+r = 108;
+us = 25.04;
+Nsteps = 500;
+D =zeros(Nsteps,1);
+parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
+%}
+
+x0 = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
+parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
 
 
+Ts = 5;
+days = 31;
 
 
+D1 = zeros(288,1);
+D1(96) = 10;
+D1(156) = 10;
+D1(228) = 10;
+D = [];
+
+for i = 1:days
+    D = [D; D1]; 
+end
 
 
+% meal vector:
+% D = MealPlan(days);
 
+load('MealPlan.mat')
 
-
+% Simulation af et menneske i 7 dage
+Simulation(x0,Ts,days,D31,parm);
 
 
 
