@@ -19,7 +19,7 @@ GFNS=NoiseSpikeFilter(Gm,dG);
 GF=lowpassfilter(GFNS,dt,tauF,k);
 
 %% Lagrangian interpolation
-
+%PROBABLY WRONG NEEDS SOME INITIAL VALUES
 for i=1:k
     T1=(t(i)-t(i-1))/((t(i-2)-t(i-1))*(t(i-2)-t(i)));
     T2=(t(i)-t(i-2))/((t(i-1)-t(i-2))*(t(i-1)-t(i)));
