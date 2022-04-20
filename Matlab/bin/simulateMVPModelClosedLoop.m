@@ -17,7 +17,7 @@ reset(groot);
 restoredefaultpath;
 
 %% Load libraries
-run('loadLibrary');
+run('../loadLibrary');
 
 %% Formatting
 % Font size
@@ -41,7 +41,7 @@ min2h = 1/h2min; % Convert from min to h
 U2mU  = 1e3;     % Convert from U   to mU
 mU2U  = 1/U2mU;  % Convert from mU  to U
 
-%% Create simulation scenario closed loop
+%% Create simulation scenario
 % Control algorithm
 ctrlAlgorithm = @pidController;
 

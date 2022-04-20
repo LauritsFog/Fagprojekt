@@ -159,39 +159,42 @@ if(flag ~= 1), error ('fmincon did not converge!'); end
 Uopen(idxbo, idxMeal) = ubo;
 
 % Simulate
-[TOpenBolus, XOpenBolus] = openLoopSimulation(x0, tspan, Uopen, D, p, simModel, simMethod, opts);
+[Topenbolus, Xopenbolus] = openLoopSimulation(x0, tspan, Uopen, D, p, simModel, simMethod, opts);
 
 % Blood glucose concentration
-GscOpenBolus = mvpOutput(XOpenBolus, p); % [mg/dL]
+Gscopenbolus = mvpOutput(Xopenbolus, p); % [mg/dL]
 
-%%
+%% Visualization
+
 % Create figure with absolute size for reproducibility
 figure;
 
 % Plot blood glucose concentration
 subplot(411);
-plot(Topen*min2h, Gscopen,Tclosed*min2h,Gscclosed,TOpenBolus*min2h,GscOpenBolus);
+plot(Topen*min2h, Gscopen,Tclosed*min2h,Gscclosed,Topenbolus*min2h,Gscopenbolus);
 xlim([t0, tf]*min2h);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
 legend('Open loop', 'Closed loop', 'Open loop with optimal bolus')
 
 % Plot meal carbohydrate
 subplot(412);
-stem(tspan(1:end-1)*min2h, Ts*D(1, :), 'MarkerSize', 0.1);
+stem(tspan(1:end-1)*min2h, Ts*D(1, :), 'MarkerSize', 0.1,'Color','k');
 xlim([t0, tf]*min2h);
 ylabel({'Meal carbohydrates', '[g CHO]'});
 
 % Plot basal insulin flow rate
 subplot(413);
-stairs(tspan*min2h, Uopen(1, [1:end, end]));
+stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 4);
 hold on
 stairs(tspan*min2h, Uclosed(1, [1:end, end]));
+hold on
+stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 2);
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :), 'MarkerSize', 1);
+stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :), 'MarkerSize', 1, 'Color', [0.9290 0.6940 0.1250]);
 xlim([t0, tf]*min2h);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');
