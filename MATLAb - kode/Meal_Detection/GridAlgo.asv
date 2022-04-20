@@ -27,15 +27,10 @@ GF=lowpassfilter(GFNS,dt,tauF,k);
 
 dGF(1)=GF(1);
 dGF(2)=GF(2);
-% dGF(1)=0;
-% dGF(2)=0;
 for i=3:k
-    T1=(t(i)-t(i-1))/...
-        ((t(i-2)-t(i-1))*(t(i-2)-t(i)));
-    T2=(t(i)-t(i-2))/...
-        ((t(i-1)-t(i-2))*(t(i-1)-t(i)));
-    T3=(2*t(i)-t(i-2)-t(i-1))/...
-        ((t(i)-t(i-1))*(t(i)-t(i-2)));
+    T1=(t(i)-t(i-1))/((t(i-2)-t(i-1))*(t(i-2)-t(i)));
+    T2=(t(i)-t(i-2))/((t(i-1)-t(i-2))*(t(i-1)-t(i)));
+    T3=(2*t(i)-t(i-2)-t(i-1))/((t(i)-t(i-1))*(t(i)-t(i-2)));
     dGF(i)=T1*GF(i-2)...
         +T2*GF(i-1)...
         +T3*GF(i);
@@ -44,9 +39,7 @@ end
 %% GRID
 GRID=zeros(1,k);
 for i=1:k
-    %if GF(i)>Gmin && (max((dGF(end-2:end)>Gmin3)) || max((dGF(end-1:end)>Gmin2)))
-    if GF(i)>Gmin && (max((dGF(i-2:i)>Gmin3))...
-            || max((dGF(i-1:i)>Gmin2))) 
+    if GF(i)>Gmin && (max((dGF(end-2:end)>Gmin3)) || (dGF(end-1:end)>Gmin2))
         GRID(i)=1;
     else
         %Not neccesary since GRID is a vector of zeros.

@@ -58,7 +58,7 @@ fs = 14;
                 
 
 figure(1)
-plot(T,X(:,4),ttmp,xtmp(:,4),"linewidth",3)
+plot(T,X(:,4), ttmp,xtmp(:,4),"linewidth",3)
 xlabel("t [min]","fontsize",fs);
 ylabel("G [mg/dL]","fontsize",fs);
 title('Measured blood glucose consentration',"fontsize",fs)

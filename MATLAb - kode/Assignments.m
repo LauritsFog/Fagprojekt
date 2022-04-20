@@ -1013,13 +1013,21 @@ end
 
 % meal vector:
 % D = MealPlan(days);
-
+%%
 load('MealPlan.mat')
 
 % Simulation af et menneske i 7 dage
 Simulation(x0,Ts,days,D31,parm);
 
 
+
+%%
+load('MealPlan.mat')
+
+% Simulation af et menneske i 7 dage
+[T,X]=Simulation(x0,Ts,1,D1,parm);
+
+plot(T,X(:,4))
 
 
 
