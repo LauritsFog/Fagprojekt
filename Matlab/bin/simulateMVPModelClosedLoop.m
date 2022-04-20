@@ -1,5 +1,5 @@
-%% Compute the optimal bolus and simulate a single meal response for the Medtronic Virtual Patient
-%  (MVP) model
+%% Perform a closed-loop simulation with a PID controller with a single meal for the Medtronic
+%  Virtual Patient (MVP) model
 
 % Clear the command window
 clc;
@@ -17,7 +17,7 @@ reset(groot);
 restoredefaultpath;
 
 %% Load libraries
-run('../loadLibrary');
+run('loadLibrary');
 
 %% Formatting
 % Font size
@@ -41,7 +41,31 @@ min2h = 1/h2min; % Convert from min to h
 U2mU  = 1e3;     % Convert from U   to mU
 mU2U  = 1/U2mU;  % Convert from mU  to U
 
-%% Create simulation scenario
+%% Create simulation scenario closed loop
+% Control algorithm
+ctrlAlgorithm = @pidController;
+
+% Simulation model
+simModel = @mvpModel;
+
+% Observed variables
+observationModel = @(t, x, p) x(7);
+
+% Simulation method/function
+simMethod = @odeEulersExplicitMethodFixedStepSize;
+
+% Controller parameters and state
+ctrlPar = [
+      5.0;    % [min]     Sampling time
+      0.05;   %           Proportional gain
+      0.0005; %           Integral gain
+      0.2500; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    NaN];     % [mU/min]  Nominal basal rate (overwritten below)
+ctrlState = [
+      0.0;  %          Initial value of integral
+    108.0]; % [mg/dL] Last measurements (dummy value)
+
 % Parameters and steady state
 p = generateMVPParameters();
 
@@ -57,21 +81,12 @@ Gs = 108; % [mg/dL]
 % If fsolve did not converge, throw an error
 if(flag ~= 1), error ('fsolve did not converge!'); end
 
-% Objective function
-objectiveFunction = @asymmetricQuadraticPenaltyFunction;
-
-% Simulation model
-simModel = @mvpModel;
-
-% Output model
-outputModel = @mvpOutput;
-
-% Simulation method/function
-simMethod = @odeEulersExplicitMethodFixedStepSize;
+% Update the nominal basal rate
+ctrlPar(6) = us(1);
 
 % Initial and final time
 t0 =  0;       % min
-tf = 18*h2min; % min
+tf = 48*h2min; % min
 
 % Sampling time
 Ts = 5; % min
@@ -88,42 +103,22 @@ tspan = Ts*(0:N);
 % Initial condition
 x0 = xs;
 
-% Manipulated inputs
-U = repmat(us, 1, N);
-
 % Disturbance variables
 D = zeros(1, N);
 
 % Meal and meal bolus after 1 hour
-tMeal           = 0*h2min;          % [min]
-idxMeal         = tMeal  /Ts + 1;   % [#]
-D(1, idxMeal)   = 90     /Ts;       % [g CHO/min]
+tMeal           = 1*h2min;        % [min]
+idxMeal         = tMeal/Ts + 1;   % [#]
+D(1, idxMeal)   = 90   /Ts;       % [g CHO/min]
 
-% Scaling factor for the objective function (purely for numerical reasons)
-scalingFactor = 1e-1;
-
-% Index of the insulin bolus in the vector of manipulated inputs
-idxbo = 2;
-
-% Initial guess of the optimal insulin bolus
-ubo0 = 0; % [mU/min]
-
-%% Compute
-% Compute the optimal bolus
-[ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan, U, D, p, ...
-    scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
-
-% If fsolve did not converge, throw an error
-if(flag ~= 1), error ('fmincon did not converge!'); end
-
-% Meal and meal bolus
-U(idxbo, 1) = ubo;
-
-% Simulate
-[T, X] = openLoopSimulation(x0, tspan, U, D, p, simModel, simMethod, opts);
+%% Simulate
+% Closed-loop simulation
+[T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlPar, ctrlState, simMethod, opts);
 
 % Blood glucose concentration
-G = mvpOutput(X, p); % [mg/dL]
+Gsc = Y; % [mg/dL]
 
 %% Visualize
 % Create figure with absolute size for reproducibility
@@ -131,9 +126,9 @@ figure;
 
 % Plot blood glucose concentration
 subplot(411);
-plot(T*min2h, G);
+plot(T*min2h, Gsc);
 xlim([t0, tf]*min2h);
-ylabel({'Blood glucose concentration', '[mg/dL]'});
+ylabel({'CGM measurements', '[mg/dL]'});
 
 % Plot meal carbohydrate
 subplot(412);

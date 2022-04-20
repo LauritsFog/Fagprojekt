@@ -92,16 +92,19 @@ us = insulin steady state,
 Kp Ti and Td = tuning parameters for PID
 Ts = sampling time = 5 min
 %}
- 
 
                         % Closed loop simulation 
 
 % Steady state vector
 X_steady = [1.2458, 1.2458 , 0.01009, 108.211, 108.211, 0, 0 ];
 
+parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
+
 % Vi sætter start glucose concentrationen til 200
 x0 = X_steady;
 x0(4) = 200;
+
+fs = 14;
 
 % Step size
 Ts = 5;
@@ -147,9 +150,9 @@ for i=1:Nsteps
     y_prev=y;
     y=x0(4);
 end
-  
-                        % Plot af simuleringen
 
+%% Plot af simuleringen
+                        
 % Plotter glucose concentrationen i blodet
 f = figure(2);
 subplot(1,2,1)
@@ -167,9 +170,7 @@ ylabel("d [g CHO/min]","fontsize",fs);
 title('Meal size',"fontsize",fs)
 set(f,'Position',[100 200 1100 700]);
 
-
-
-                        % Simulation of meal size thats too big
+%% Simulation of meal size thats too big
 
 % Start glucose concentration er nu på steady state
 x0 = X_steady;
@@ -216,19 +217,26 @@ for i=1:Nsteps
     y=x0(4);
 end
 
-                        % Plot af simuleringen
+%% Plot af simuleringen
 
 % Plotter glucose concentrationen i blodet
 f = figure(3);
-subplot(1,2,1)
-plot(T,X(:,4),ttmp,xtmp(:,4),"linewidth",3)
+subplot(1,3,1)
+plot(T,X(:,4),"linewidth",3)
 xlabel("t [min]","fontsize",fs);
 ylabel("G [mg/dL]","fontsize",fs);
 title('Measured blood glucose consentration',"fontsize",fs)
 set(gca,"fontsize",fs)
-legend("Glucose concentration","Steady state","location","northeast")
+legend("Glucose concentration","location","northeast")
 
-subplot(1,2,2)
+subplot(1,3,2)
+plot(ttmp,xtmp(:,4),"linewidth",3)
+xlabel("t [min]","fontsize",fs);
+ylabel("G [mg/dL]","fontsize",fs);
+set(gca,"fontsize",fs)
+legend("Steady state","location","northeast")
+
+subplot(1,3,3)
 plot(D,"linewidth",3)
 xlabel("t [h]","fontsize",fs+2);
 ylabel("d [g CHO/min]","fontsize",fs+2);

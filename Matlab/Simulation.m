@@ -1,8 +1,8 @@
-function [T , X] = Simulation(x0,Ts,days, D, parm)
+function [T , X] = Simulation(x0,Ts,days,D,parm)
 
 %{
 x0 = steady state vector
-Ts = step size
+Ts = step size (minutes)
 nd = number of days we simulate
 r = insulin target
 us = insulin injection rate
@@ -14,8 +14,6 @@ parm = parameters
 tspan = [0 Ts];
 
 Nsteps = days*24*60/Ts;
-
-
 
 % Initialisering af T og X
 X = [];
@@ -44,7 +42,7 @@ for i=1:Nsteps
     [u,ii] = PIDControl(ii,r,y,y_prev,us,Kp,Ti,Td,Ts);
     u = max(u,0);
     d = D(i);
-    [ttmp,xtmp] = ode15s(@MVPmodel,tspan+5*(i-1),x0,[],u,d,parm);
+    [ttmp,xtmp] = ode15s(@mvpModel,tspan+5*(i-1),x0,[],u,d,parm);
     X = [X;xtmp];
     T = [T;ttmp];
     x0=xtmp(end,:)';

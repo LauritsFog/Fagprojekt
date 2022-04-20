@@ -17,7 +17,7 @@ reset(groot);
 restoredefaultpath;
 
 %% Load libraries
-run('../loadLibrary');
+run('loadLibrary');
 
 %% Formatting
 % Font size
@@ -38,8 +38,8 @@ set(groot, 'DefaultStemLineWidth',  lw);
 % Conversion factors
 h2min = 60;      % Convert from h   to min
 min2h = 1/h2min; % Convert from min to h
-U2mU  = 1e3;     % Convert from U   to mU
-mU2U  = 1/U2mU;  % Convert from mU  to U
+U2mU  = 1e3;     % Convert from Uopen   to mU
+mU2U  = 1/U2mU;  % Convert from mU  to Uopen
 
 %% Create simulation scenario
 % Control algorithm
@@ -47,6 +47,9 @@ ctrlAlgorithm = @pidController;
 
 % Simulation model
 simModel = @mvpModel;
+
+% Output model
+outputModel = @mvpOutput;
 
 % Observed variables
 observationModel = @(t, x, p) x(7);
@@ -81,6 +84,9 @@ Gs = 108; % [mg/dL]
 % If fsolve did not converge, throw an error
 if(flag ~= 1), error ('fsolve did not converge!'); end
 
+% Objective function
+objectiveFunction = @asymmetricQuadraticPenaltyFunction;
+
 % Update the nominal basal rate
 ctrlPar(6) = us(1);
 
@@ -103,6 +109,9 @@ tspan = Ts*(0:N);
 % Initial condition
 x0 = xs;
 
+% Manipulated inputs
+Uopen = repmat(us, 1, N);
+
 % Disturbance variables
 D = zeros(1, N);
 
@@ -110,25 +119,61 @@ D = zeros(1, N);
 tMeal           = 1*h2min;        % [min]
 idxMeal         = tMeal/Ts + 1;   % [#]
 D(1, idxMeal)   = 90   /Ts;       % [g CHO/min]
+Uopen(2, idxMeal)   = 0;       % [mU/min]
 
-%% Simulate
+% Scaling factor for the objective function (purely for numerical reasons)
+scalingFactor = 1e-2;
+
+% Index of the insulin bolus in the vector of manipulated inputs
+idxbo = 2;
+
+% Initial guess of the optimal insulin bolus
+ubo0 = 0; % [mU/min]
+
+%% Simulate open loop
+
+[Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, D, p, simModel, simMethod, opts);
+
+% Blood glucose concentration
+Gscopen = mvpOutput(Xopen, p); % [mg/dL]
+
+%% Simulate closed loop
 % Closed-loop simulation
-[T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
+[Tclosed, Xclosed, Yclosed, Uclosed] = closedLoopSimulation(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
     ctrlPar, ctrlState, simMethod, opts);
 
 % Blood glucose concentration
-Gsc = Y; % [mg/dL]
+Gscclosed = Yclosed; % [mg/dL]
 
-%% Visualize
+%% Simulate open loop with optimal bolus
+
+% Compute the optimal bolus
+[ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan, Uopen, D, p, ...
+    scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
+
+% If fsolve did not converge, throw an error
+if(flag ~= 1), error ('fmincon did not converge!'); end
+
+% Meal and meal bolus
+Uopen(idxbo, idxMeal) = ubo;
+
+% Simulate
+[TOpenBolus, XOpenBolus] = openLoopSimulation(x0, tspan, Uopen, D, p, simModel, simMethod, opts);
+
+% Blood glucose concentration
+GscOpenBolus = mvpOutput(XOpenBolus, p); % [mg/dL]
+
+%%
 % Create figure with absolute size for reproducibility
 figure;
 
 % Plot blood glucose concentration
 subplot(411);
-plot(T*min2h, Gsc);
+plot(Topen*min2h, Gscopen,Tclosed*min2h,Gscclosed,TOpenBolus*min2h,GscOpenBolus);
 xlim([t0, tf]*min2h);
-ylabel({'CGM measurements', '[mg/dL]'});
+ylabel({'Blood glucose concentration', '[mg/dL]'});
+legend('Open loop', 'Closed loop', 'Open loop with optimal bolus')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -138,13 +183,15 @@ ylabel({'Meal carbohydrates', '[g CHO]'});
 
 % Plot basal insulin flow rate
 subplot(413);
-stairs(tspan*min2h, U(1, [1:end, end]));
+stairs(tspan*min2h, Uopen(1, [1:end, end]));
+hold on
+stairs(tspan*min2h, Uclosed(1, [1:end, end]));
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-stem(tspan(1:end-1)*min2h, Ts*mU2U*U(2, :), 'MarkerSize', 1);
+stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :), 'MarkerSize', 1);
 xlim([t0, tf]*min2h);
-ylabel({'Bolus insulin', '[U]'});
+ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');

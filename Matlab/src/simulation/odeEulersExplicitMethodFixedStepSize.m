@@ -92,4 +92,8 @@ for k = 1:N
     % Store solution
     T(k+1   ) = tkp1;
     X(k+1, :) = xkp1;
+
+    % Update states
+    tk = tkp1;
+    xk = xkp1;
 end
