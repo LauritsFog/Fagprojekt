@@ -1,4 +1,4 @@
-function [T , X] = Simulation(x0,Ts,days,D,parm)
+function [T , X] = Simulation(x0,Ts,days,D,parm,plots)
 
 %{
 x0 = steady state vector
@@ -50,9 +50,19 @@ for i=1:Nsteps
     y=x0(4);
 end
 
+%% Parameter deciding to plot or not. Leaving plots blank gives the plot
+if ~exist('plots','var')
+     % third parameter does not exist, so default it to something
+      plots = 0;
+ end
 
-                % Plotter glucose concentrationen i blodet
-fs = 14;
+
+
+if plots==1
+
+else
+    % Plotter glucose concentrationen i blodet
+    fs = 14;
                 
 
 figure(1)
@@ -69,6 +79,8 @@ xlabel("t [min]","fontsize",fs);
 ylabel("d [g CHO/min]","fontsize",fs);
 title('Meal size',"fontsize",fs)
 %%set(f,'Position',[100 200 1100 700]);
+end
+
 
 
 end
