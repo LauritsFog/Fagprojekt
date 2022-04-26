@@ -1,4 +1,5 @@
 function dGF=LagInterpol(GF,t)
+%%NOT IN USE
  k=length(GF);
  dGF=zeros(1,k);
  for i=1:k

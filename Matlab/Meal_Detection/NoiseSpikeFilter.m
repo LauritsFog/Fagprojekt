@@ -14,7 +14,7 @@ for i=2:k
     if abs(Gm(i)-GFNS(i-1))<=dG
         GFNS(i)=Gm(i);
         
-    elseif (GFNS(i-1)-GM(i))>dG
+    elseif (GFNS(i-1)-Gm(i))>dG
         GFNS(i)=GFNS(i-1)-dG;
         
     elseif (Gm(i)-GFNS(i-1))>dG

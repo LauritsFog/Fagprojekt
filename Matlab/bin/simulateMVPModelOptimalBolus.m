@@ -100,7 +100,7 @@ idxMeal         = tMeal  /Ts + 1;   % [#]
 D(1, idxMeal)   = 90     /Ts;       % [g CHO/min]
 
 % Scaling factor for the objective function (purely for numerical reasons)
-scalingFactor = 1e-1;
+scalingFactor = 1e-2;
 
 % Index of the insulin bolus in the vector of manipulated inputs
 idxbo = 2;

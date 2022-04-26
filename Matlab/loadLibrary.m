@@ -49,9 +49,12 @@ function loadLibrary()
 fprintf('Loading diabetes library .. ');
 
 % Add real thermodynamics functions
-addpath(genpath(fullfile(pwd, './PID-Controller')));
-addpath(genpath(fullfile(pwd, './MVP')));
-addpath(genpath(fullfile(pwd, './Bolus')));
-addpath(genpath(fullfile(pwd, './Meal_Detection')));
+addpath(genpath(fullfile(pwd, './src')));
+addpath('PID-Controller');
+addpath('MVP');
+addpath('Meal_Detection');
+addpath('Bolus');
+addpath('bin');
+
 % Let the user know that the library is being loaded
 fprintf('Done\n');

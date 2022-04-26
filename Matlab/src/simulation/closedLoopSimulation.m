@@ -106,8 +106,7 @@ yk = y0;
 
 for k = 1:N
     % Times
-    tk    = tspan(k  );
-    tkp1  = tspan(k+1);
+    tkp1 = tspan(k+1);
     
     % Controller state
     ctrlStatek = ctrlState(:, k);
