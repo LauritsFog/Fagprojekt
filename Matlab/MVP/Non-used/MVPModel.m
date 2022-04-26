@@ -1,5 +1,5 @@
 
-function dx = MVPmodel(t,x,u,d,parm)
+function dx = mvpModel(t,x,u,d,parm)
 
 % De forskellige parameter taget fra parm osm er en vektor med værdier
 tau1 = parm(1);
@@ -24,6 +24,9 @@ dx(5) = (x(4)-x(5))/tsc; %%%%%
 dx(6) = d-x(6)/taum;
 dx(7) = (x(6)-x(7))/taum;
 %}
+
+disp(size(u))
+
 dx(1) = u/(tau1*CI)-x(1)/tau1;
 
 dx(2) = (x(1)-x(2))/tau2;

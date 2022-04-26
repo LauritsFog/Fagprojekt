@@ -1,22 +1,27 @@
-function loadLibrary()
-% LOADLIBRARY Add relevant library folders to the Matlab search path.
+function G = mvpOutput(X, p) %#ok
+% MVPOUTPUT Evaluate the output, i.e., the blood glucose concentration for
+% the Medtronic Virtual Patient (MVP) model.
 %
 % SYNOPSIS:
-%   AddLibrary
+%   G = mvpOutput(X, p)
 %
 % DESCRIPTION:
-%   Adds relevant library folders to the Matlab search path such that they
-%   may be called from the current folder.
+% Given N+1 state vectors and the parameters in the Medtronic Virtual
+% Patient (MVP) model, evaluate the blood glucose concentrations.
 %
 % REQUIRED PARAMETERS:
-% 
+%   t - time
+%   X - a vector of state variables       (dimension: 7 x N+1)
+%   p - a vector parameters               (dimension: 10)
+%
 % OPTIONAL PARAMETERS:
 %
 % RETURNS:
+%   G   - the blood glucose concentrations  (dimension: N+1)
 %
 % DEPENDENCIES:
 %
-% See also mvpOutput
+% See also mvpModel
 %          generateMVPParameters
 %          mvpModelSteadyStateWrapper
 %          computeSteadyStateMVPModel
@@ -45,13 +50,5 @@ function loadLibrary()
 % Asbjørn Thode Reenberg
 % John Bagterp Jørgensen
 
-% Let the user know that the library is being loaded
-fprintf('Loading diabetes library .. ');
-
-% Add real thermodynamics functions
-addpath(genpath(fullfile(pwd, './PID-Controller')));
-addpath(genpath(fullfile(pwd, './MVP')));
-addpath(genpath(fullfile(pwd, './Bolus')));
-addpath(genpath(fullfile(pwd, './Meal_Detection')));
-% Let the user know that the library is being loaded
-fprintf('Done\n');
+% Glucose subsystem
+G = X(6, :); % [mg/dL] Blood glucose concentration
