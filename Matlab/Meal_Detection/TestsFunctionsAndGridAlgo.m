@@ -47,7 +47,7 @@ subplot(2,2,1)
 hold on
 plot(t,Gm(:,4),"linewidth",3)
 plot(t,GRID*350);
-title("dg = 1 , dt = 1")
+title("dg = 50 , dt = 50")
 hold off
 
 dg=10;
