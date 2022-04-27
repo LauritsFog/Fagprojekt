@@ -80,3 +80,4 @@ plot(t,GRID*350);
 title("dg = 1 , dt = 30")
 hold off
 
+%%Hej
