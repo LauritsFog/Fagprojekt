@@ -37,3 +37,6 @@ dt=1;
 plot(t,GRID*350);
 
 
+%% Morten Branch
+display("2+2 er: "+(2+2))
+
