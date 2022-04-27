@@ -198,3 +198,12 @@ stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :), 'MarkerSize', 1, 'Color', [0.929
 xlim([t0, tf]*min2h);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');
+
+%% Penalty function comparison
+
+phiopen = asymmetricQuadraticPenaltyFunction(Topen,Gscopen,p);
+phiclosed = asymmetricQuadraticPenaltyFunction(Tclosed,Gscclosed,p);
+phiopenoptbolus = asymmetricQuadraticPenaltyFunction(Topenbolus,Gscopenbolus,p);
+
+figure
+bar([1,2,3],[phiopen,phiclosed,phiopenoptbolus])
