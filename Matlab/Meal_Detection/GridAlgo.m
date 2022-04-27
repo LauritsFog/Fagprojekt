@@ -2,9 +2,11 @@ function [GF,dGF,GRID]=GridAlgo(Gm,dG,dt,~,t)
 %%%%%%%%%%%%%%%
 %Function to calculate the Grid algorithm
 %% input
-%[Vector] Gm Measure ment (Length: k)
-%[int] k length of vectors
-%[int] dG Maximum allowable ROC
+%[Vector] Gm Measurement (Length: k)
+%[int] dG (deltaG) Maximum allowable ROC
+%[int] dt sampling period
+%[int] ~ tauF Isn't used since we use specific value for tauF
+%[Vector] t timevector (Length: k)
 %% Output
 %[Vector] GRID with length k either 0 or 1 at the i'th entry.
 %% Best values for parameters

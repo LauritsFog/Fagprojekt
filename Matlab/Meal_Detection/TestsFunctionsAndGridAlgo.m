@@ -20,11 +20,12 @@ days=1;
 [t,Gm]=Simulation(x0,Ts,days,D1,parm,1);
 
 figure(1)
-hold on
 plot(t,Gm(:,4),"linewidth",3)
 xlabel("t [min]");
 ylabel("G [mg/dL]");
 title('Measured blood glucose consentration')
+set(gca)
+legend("Glucose concentration","Steady state","location","northeast")
 
 %plot(t,Gm(:,4))
 %dg=3;
@@ -34,53 +35,8 @@ dt=1;
 %12 is arbitary chosen the parameter doesnt do anything in the function
 [GF,dGF,GRID]=GridAlgo(Gm(:,4),dg,dt,12,t);
 plot(t,GRID*350);
-hold off
 
-%% Test af dg and dt
 
-dg=1;
-dt=1;
-[t,Gm]=Simulation(x0,Ts,days,D1,parm,1);
-[GF,dGF,GRID]=GridAlgo(Gm(:,4),dg,dt,12,t);
+%% Morten Branch
+display("2+2 er: "+(2+2))
 
-subplot(2,2,1)
-hold on
-plot(t,Gm(:,4),"linewidth",3)
-plot(t,GRID*350);
-title("dg = 1 , dt = 1")
-hold off
-
-dg=1;
-dt=10;
-[GF,dGF,GRID]=GridAlgo(Gm(:,4),dg,dt,12,t);
-
-subplot(2,2,2)
-hold on
-plot(t,Gm(:,4),"linewidth",3)
-plot(t,GRID*350);
-title("dg = 1 , dt = 10")
-hold off
-
-dg=1;
-dt=20;
-[t,Gm]=Simulation(x0,Ts,days,D1,parm,1);
-[GF,dGF,GRID]=GridAlgo(Gm(:,4),dg,dt,12,t);
-
-subplot(2,2,3)
-hold on
-plot(t,Gm(:,4),"linewidth",3)
-plot(t,GRID*350);
-title("dg = 1 , dt = 20")
-hold off
-
-dg=1;
-dt=30;
-[t,Gm]=Simulation(x0,Ts,days,D1,parm,1);
-[GF,dGF,GRID]=GridAlgo(Gm(:,4),dg,dt,12,t);
-
-subplot(2,2,4)
-hold on
-plot(t,Gm(:,4),"linewidth",3)
-plot(t,GRID*350);
-title("dg = 1 , dt = 30")
-hold off
