@@ -1,10 +1,7 @@
                             %% Part 1
                 % Modeling, Simulation and Control
-clear all;
 clc;
-addpath('PID-Controller')
-addpath('MVP')
-addpath('Bolus')
+loadLibrary();
 
 %% Problem 1
 
@@ -486,18 +483,8 @@ Ti = 200;
 Td = 10;
 
 ii = 0;
-
-for i=1:Nsteps
-    [u,ii] = PIDControl(ii,r,y,y_prev,us,Kp,Ti,Td,Ts);
-    u = max(u,0);
-    d = D(i);
-    [ttmp,xtmp] = ode15s(@MVPmodel,tspan+5*(i-1),x0,[],u,d,parm);
-    X = [X;xtmp];
-    T = [T;ttmp];
-    x0=xtmp(end,:)';
-    y_prev=y;
-    y=x0(4);
-end
+days = 1;
+[T , X] = Simulation(x0,Ts,days,D,parm,1);
 
 % Plot af simuleringen
 
@@ -900,19 +887,11 @@ Xopt = [];
 Topt = [];
 
 ii = 0;
+days = 2;
+D1 = MealPlan(days,1);
+[T , X] = Simulation(x0,Ts,days,D1,parm,0);
 
-for i=1:Nsteps
-    [u,ii] = PIDControl(ii,r,y,y_prev,us,Kp,Ti,Td,Ts);
-    u = max(u,0);
-    d = D(i);
-    [topt,xopt] = ode15s(@MVPmodel,tspan+5*(i-1),x0,[],u,d,parm3);
-    Xopt = [Xopt;xopt];
-    Topt = [Topt;topt];
-    x0=xopt(end,:)';
-    y_prev=y;
-    y=x0(4);
-end
-
+%{
 f = figure(2);
 subplot(2,1,1)
 plot(T,X(:,4),"linewidth",3)
@@ -926,6 +905,7 @@ xlabel("t [min]","fontsize",fs);
 ylabel("G [mg/dL]","fontsize",fs);
 title(string3,"fontsize",fs)
 set(f,'Position',[1700 100 600 1500]); % [x, y , bredte, højde]
+%}
 
 %{
 10% ændring
@@ -1009,10 +989,16 @@ D = [];
 for i = 1:days
     D = [D; D1]; 
 end
+%%
 
+days = 2;
+snack = 1;
 
 % meal vector:
-% D = MealPlan(days);
+D = MealPlan(days,snack);
+
+plot(D)
+
 %%
 load('MealPlan.mat')
 

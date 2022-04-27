@@ -5,7 +5,7 @@ function [u,i] = PIDControl(i,r,y,y_prev,us,Kp,Ti,Td,Ts)
 % y = current blood glucose concentration
 % y_prev = previous blood glucose concentration
 % us is the insulin steady state
-% Kp, Ti and Td are the tuning parameters og the PID controller
+% Kp, Ti and Td are the tuning parameters of the PID controller
 % Ts = 5min is sampling time
 
 e = y-r; % Error 
