@@ -36,7 +36,47 @@ dt=1;
 [GF,dGF,GRID]=GridAlgo(Gm(:,4),dg,dt,12,t);
 plot(t,GRID*350);
 
+%% Test af dg and dt
 
-%% Morten Branch
-display("2+2 er: "+(2+2))
+dg=1;
+dt=1;
+[t,Gm]=Simulation(x0,Ts,days,D1,parm,1);
+[GF,dGF,GRID]=GridAlgo(Gm(:,4),dg,dt,12,t);
+
+subplot(2,2,1)
+hold on
+plot(t,Gm(:,4),"linewidth",3)
+plot(t,GRID*350);
+title("dg = 1 , dt = 1")
+hold off
+
+dg=10;
+dt=1;
+[GF,dGF,GRID]=GridAlgo(Gm(:,4),dg,dt,12,t);
+
+subplot(2,2,2)
+hold on
+plot(t,Gm(:,4),"linewidth",3)
+plot(t,GRID*350);
+title("dg = 10 , dt = 1")
+hold off
+
+dg=1;
+dt=10;
+[t,Gm]=Simulation(x0,Ts,days,D1,parm,1);
+[GF,dGF,GRID]=GridAlgo(Gm(:,4),dg,dt,12,t);
+
+subplot(2,2,3)
+hold on
+plot(t,Gm(:,4),"linewidth",3)
+plot(t,GRID*350);
+title("dg = 1 , dt = 1")
+hold off
+
+subplot(2,2,4)
+hold on
+plot(t,Gm(:,4),"linewidth",3)
+plot(t,GRID*350);
+title("dg = 1 , dt = 30")
+hold off
 
