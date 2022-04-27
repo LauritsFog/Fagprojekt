@@ -1009,10 +1009,16 @@ D = [];
 for i = 1:days
     D = [D; D1]; 
 end
+%%
 
+days = 2;
+snack = 1;
 
 % meal vector:
-% D = MealPlan(days);
+D = MealPlan(days,snack);
+
+plot(D)
+
 %%
 load('MealPlan.mat')
 
