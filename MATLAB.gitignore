@@ -29,3 +29,6 @@ codegen/
 
 # Octave session info
 octave-workspace
+
+# Ignore DS_Store files
+.DS_Store
