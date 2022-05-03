@@ -1,4 +1,4 @@
-%% Initialize
+%% Intitialize
 %  Virtual Patient (MVP) model
 
 % Clear the command window
@@ -40,10 +40,11 @@ h2min = 60;      % Convert from h   to min
 min2h = 1/h2min; % Convert from min to h
 U2mU  = 1e3;     % Convert from Uopen   to mU
 mU2U  = 1/U2mU;  % Convert from mU  to Uopen
+mmolL2mgdL = 18; % Convert from mmol/L to mg/dL
 
 %% Create simulation scenario
 % Control algorithm
-ctrlAlgorithm = @pidController;
+ctrlAlgorithm = @pidControllerOptBolus;
 
 % Simulation model
 simModel = @mvpModel;
@@ -137,62 +138,40 @@ idxbo = 2;
 ubo0 = 0; % [mU/min]
 
 % Halting iterations used in PID controller
-haltingiter = 24;
+haltinghours = 5;
+haltingiter = haltinghours*h2min/Ts;
 
-%% Simulate open loop
-
-[Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
-
-% Blood glucose concentration
-Gscopen = mvpOutput(Xopen, p); % [mg/dL]
-
-%% Simulate closed loop
-% Closed-loop simulation
-[Tclosed, Xclosed, Yclosed, Uclosed] = closedLoopSimulation(x0, tspan, Duse, p, ...
-    simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, opts);
+%% Simulation
+[T, X, Y, U] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, @pidControllerOptBolus, ...
+    ctrlPar, ctrlState, simMethod, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, opts);
 
 % Blood glucose concentration
-Gscclosed = Yclosed; % [mg/dL]
-
-%% Simulate open loop with optimal bolus
-
-for i = 1:length(tspan(1:end-1))
-    if Duse(i) ~= 0 % If a meal is eaten
-        % Create D array with meal at index 1 and 0's for the rest of the
-        % time span
-        Dtemp = zeros(1,length(tspan(i:end-1)));
-        Dtemp(1) = Duse(i);
-        
-        % Compute the optimal bolus
-        [ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan(i:end-1), Uopen(:,i:end-1), Dtemp, p, ...
-            scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
-
-        % If fsolve did not converge, throw an error
-        % if(flag ~= 1), error ('fmincon did not converge!'); end
-
-        % Meal and meal bolus
-        Uopen(idxbo, i) = ubo;
-    end
-end
-
-% Simulate
-[Topenbolus, Xopenbolus] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
-
-% Blood glucose concentration
-Gscopenbolus = mvpOutput(Xopenbolus, p); % [mg/dL]
+Gsc = Y; % [mg/dL]
 
 %% Visualization
 
+Gcrit = [3,3.9,10,13.9,max(Gsc)/9]*mmolL2mgdL;
+Gcritcolors = {[255, 71, 71]/255;
+               [255, 154, 71]/255;
+               [71, 255, 126]/255;
+               [255, 237, 71]/255;
+               [255, 129, 71]/255};
+
 % Create figure with absolute size for reproducibility
-figure;
+figure
 
 % Plot blood glucose concentration
 subplot(411);
-plot(Topen*min2h, Gscopen,Tclosed*min2h,Gscclosed,Topenbolus*min2h,Gscopenbolus);
+for i = length(Gcrit):-1:1
+    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i})
+    hold on
+end
+plot(T*min2h, Gsc,'b');
 xlim([t0, tf]*min2h);
+ylim([0, max(Gsc)*1.2]);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
-legend('Open loop', 'Closed loop', 'Open loop with optimal bolus')
+legend('Closed loop with optimal bolus')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -202,26 +181,13 @@ ylabel({'Meal carbohydrates', '[g CHO]'});
 
 % Plot basal insulin flow rate
 subplot(413);
-stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 4);
-hold on
-stairs(tspan*min2h, Uclosed(1, [1:end, end]));
-hold on
-stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 2);
+stairs(tspan*min2h, U(1, [1:end, end]),'LineWidth', 4,'Color','b');
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :), 'MarkerSize', 1, 'Color', [0.9290 0.6940 0.1250]);
+stem(tspan(1:end-1)*min2h, Ts*mU2U*U(2, :), 'MarkerSize', 1, 'Color', [0.9290 0.6940 0.1250]);
 xlim([t0, tf]*min2h);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');
-
-%% Penalty function comparison
-
-phiopen = asymmetricQuadraticPenaltyFunction(Topen,Gscopen,p);
-phiclosed = asymmetricQuadraticPenaltyFunction(Tclosed,Gscclosed,p);
-phiopenoptbolus = asymmetricQuadraticPenaltyFunction(Topenbolus,Gscopenbolus,p);
-
-figure
-bar([1,2,3],[phiopen,phiclosed,phiopenoptbolus])

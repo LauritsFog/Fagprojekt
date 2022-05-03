@@ -1,4 +1,4 @@
-function [uk, ctrlState] = pidController(tk, yk, dhatk, ctrlPar, ctrlState) %#ok
+function [uk, ctrlState] = pidControllerOptbolus(tk, yk, dhatk, ctrlPar, ctrlState, tpause) %#ok
 % Unpack control parameters
 Ts      = ctrlPar(1); % [min]    Sampling time
 KP      = ctrlPar(2); %          Proportional gain
@@ -21,7 +21,11 @@ dek = (yk - ykm1)/Ts;
 Pk = KP*ek;
 
 % Integral term
-Ik = Ikm1 + KI*ek*Ts;
+if tpause == 0
+    Ik = Ikm1 + KI*ek*Ts;
+else
+    Ik = Ikm1;
+end
 
 % Derivative term
 Dk = KD*dek;
