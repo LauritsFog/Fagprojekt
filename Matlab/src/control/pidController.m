@@ -1,5 +1,5 @@
 function [uk, ctrlState] = pidController ...
-    (tk, yk, dhatk, ctrlPar, ctrlState) %#ok
+    (tk, yk, dhatk, ctrlPar, ctrlState, varargin) %#ok
 % PIDCONTROLLER PID controller for controlling the insulin flow rate.
 %
 % SYNOPSIS:

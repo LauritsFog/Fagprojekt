@@ -43,8 +43,6 @@ mU2U  = 1/U2mU;  % Convert from mU  to Uopen
 mmolL2mgdL = 18; % Convert from mmol/L to mg/dL
 
 %% Create simulation scenario
-% Control algorithm
-ctrlAlgorithm = @pidControllerOptBolus;
 
 % Simulation model
 simModel = @mvpModel;
@@ -58,14 +56,6 @@ observationModel = @(t, x, p) x(7);
 % Simulation method/function
 simMethod = @odeEulersExplicitMethodFixedStepSize;
 
-% Controller parameters and state
-ctrlPar = [
-      5.0;    % [min]     Sampling time
-      0.05;   %           Proportional gain
-      0.0005; %           Integral gain
-      0.2500; %           Derivative gain
-    108.0;    % [mg/dL]   Target blood glucose concentration
-    NaN];     % [mU/min]  Nominal basal rate (overwritten below)
 ctrlState = [
       0.0;  %          Initial value of integral
     108.0]; % [mg/dL] Last measurements (dummy value)
@@ -87,9 +77,6 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 
 % Objective function
 objectiveFunction = @asymmetricQuadraticPenaltyFunction;
-
-% Update the nominal basal rate
-ctrlPar(6) = us(1);
 
 % Initial and final time
 t0 =  0;       % min
@@ -137,26 +124,67 @@ idxbo = 2;
 % Initial guess of the optimal insulin bolus
 ubo0 = 0; % [mU/min]
 
+%% Simulation optimal bolus
+
+% Controller parameters and state
+ctrlPar = [
+      5.0;    % [min]     Sampling time
+      0.05;   %           Proportional gain
+      0.0005; %           Integral gain
+      0.2500; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate 
+
 % Halting iterations used in PID controller
-haltinghours = 5;
+haltinghours = 8;
 haltingiter = haltinghours*h2min/Ts;
 
-%% Simulation
-[T, X, Y, U] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
-    simModel, observationModel, @pidControllerOptBolus, ...
+% Control algorithm
+ctrlAlgorithm = @pidControllerOptBolus;
+
+[TOptBolus, XOptBolus, YOptBolus, UOptBolus] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
     ctrlPar, ctrlState, simMethod, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, opts);
 
 % Blood glucose concentration
-Gsc = Y; % [mg/dL]
+GscOptBolus = YOptBolus; % [mg/dL]
+
+%% Simulation super bolus
+
+% Controller parameters and state
+ctrlPar = [
+      5.0;    % [min]     Sampling time
+      0.05;   %           Proportional gain
+      0.0005; %           Integral gain
+      0.2500; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate
+
+% Halting iterations used in PID controller
+haltinghours = 3;
+haltingiter = haltinghours*h2min/Ts;
+
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+[TSupBolus, XSupBolus, YSupBolus, USupBolus] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, opts);
+
+% Blood glucose concentration
+GscSupBasal = YSupBolus; % [mg/dL]
 
 %% Visualization
 
-Gcrit = [3,3.9,10,13.9,max(Gsc)/9]*mmolL2mgdL;
-Gcritcolors = {[255, 71, 71]/255;
-               [255, 154, 71]/255;
-               [71, 255, 126]/255;
-               [255, 237, 71]/255;
-               [255, 129, 71]/255};
+c = copper(2);
+
+% Setting critical intervals and interval colors
+Gcrit = [3,3.9,10,13.9,2*13.9]*mmolL2mgdL;
+Gcritcolors = {[255, 105, 105]/255;
+               [255, 156, 156]/255;
+               [156, 255, 159]/255;
+               [255, 247, 156]/255;
+               [255, 219, 156]/255};
 
 % Create figure with absolute size for reproducibility
 figure
@@ -164,14 +192,16 @@ figure
 % Plot blood glucose concentration
 subplot(411);
 for i = length(Gcrit):-1:1
-    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i})
+    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
-plot(T*min2h, Gsc,'b');
+plot(TOptBolus*min2h, GscOptBolus,'Color',c(1,:));
+hold on
+plot(TSupBolus*min2h, GscSupBasal,'Color',c(2,:));
 xlim([t0, tf]*min2h);
-ylim([0, max(Gsc)*1.2]);
+ylim([0, max([GscOptBolus,GscSupBasal])*1.2]);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
-legend('Closed loop with optimal bolus')
+% legend('Closed loop with optimal bolus')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -181,13 +211,17 @@ ylabel({'Meal carbohydrates', '[g CHO]'});
 
 % Plot basal insulin flow rate
 subplot(413);
-stairs(tspan*min2h, U(1, [1:end, end]),'LineWidth', 4,'Color','b');
+stairs(tspan*min2h, UOptBolus(1, [1:end, end]),'LineWidth', 4,'Color',c(1,:));
+hold on
+stairs(tspan*min2h, USupBolus(1, [1:end, end]),'LineWidth', 4,'Color',c(2,:));
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-stem(tspan(1:end-1)*min2h, Ts*mU2U*U(2, :), 'MarkerSize', 1, 'Color', [0.9290 0.6940 0.1250]);
+plot(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'LineStyle','none','Marker', 'o', 'MarkerSize', 4, 'Color', c(1,:));
+hold on
+plot(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'LineStyle','none','Marker', '+', 'MarkerSize', 4, 'Color', c(2,:));
 xlim([t0, tf]*min2h);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');

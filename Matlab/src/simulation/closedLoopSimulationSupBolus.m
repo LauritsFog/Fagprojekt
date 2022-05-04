@@ -1,6 +1,6 @@
-function [T, X, Y, U, ctrlState] = closedLoopSimulationOptBolus(x0, tspan, D, p, ...
+function [T, X, Y, U, ctrlState] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState0, simMethod, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, opts)
+    ctrlPar, ctrlState0, simMethod, haltingiter, idxbo, opts)
 % CLOSEDLOOPSIMULATION Simulate a closed-loop control algorithm.
 %
 % SYNOPSIS:
@@ -74,12 +74,6 @@ y0 = observationModel(t0, x0, p);
 % Integration halt time during bolus titration
 tpause = 0;
 
-% Time span used when computing optimal bolus
-tspanbolus = tspan(1:haltingiter);
-
-% Basal during bolus titration
-Ubolus = zeros(2,length(tspanbolus));
-
 % Determine the number of manipulated inputs
 uDummy = ctrlAlgorithm(t0, NaN, NaN, ctrlPar, ctrlState0, tpause);
 
@@ -128,13 +122,9 @@ for k = 1:N
     if dk ~= 0
         tpause = haltingiter;
         
-        % Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, tpause);
+        Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, @pidController, simModel, simMethod, observationModel, tpause);
         
-        [ubok, flag] = computeOptimalBolus(ubo0, idxbo, xk, tspanbolus, Ubolus, D, p, ...
-        scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
-        
-        % If fsolve did not converge, throw an error
-        % if(flag ~= 1), error ('fmincon did not converge!'); end
+        ubok = sum(Ubolus(1,:));
     else
         ubok = 0;
     end
