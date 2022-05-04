@@ -10,7 +10,7 @@ function [U] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgor
         
         % Compute manipulated inputs
         [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, haltingiter);
-
+        
         % Time interval
         tspank = linspace(tk, tkp1, Nk+1);
 
