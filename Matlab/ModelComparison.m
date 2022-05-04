@@ -46,7 +46,8 @@ mU2U  = 1/U2mU;  % Convert from mU  to Uopen
 ctrlAlgorithm = @pidController;
 
 % Simulation model
-simModel = @mvpModel;
+simModelNormal = @mvpModel;
+simModelNoise = @MVPNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -141,7 +142,7 @@ haltingiter = 24;
 
 %% Simulate open loop
 
-[Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
+[Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModelNormal, simMethod, opts);
 
 % Blood glucose concentration
 Gscopen = mvpOutput(Xopen, p); % [mg/dL]
@@ -149,11 +150,21 @@ Gscopen = mvpOutput(Xopen, p); % [mg/dL]
 %% Simulate closed loop
 % Closed-loop simulation
 [Tclosed, Xclosed, Yclosed, Uclosed] = closedLoopSimulation(x0, tspan, Duse, p, ...
-    simModel, observationModel, ctrlAlgorithm, ...
+    simModelNormal, observationModel, ctrlAlgorithm, ...
     ctrlPar, ctrlState, simMethod, opts);
 
 % Blood glucose concentration
 Gscclosed = Yclosed; % [mg/dL]
+
+                                    % Noise
+% Closed-loop simulation - Noise
+[Tclosed, Xclosed, Yclosed, Uclosed] = closedLoopSimulation(x0, tspan, Duse, p, ...
+    simModelNoise, observationModel, ctrlAlgorithm, ...
+    ctrlPar, ctrlState, simMethod, opts);
+
+% Blood glucose concentration
+GscclosedNoise = Yclosed; % [mg/dL]
+
 
 %% Simulate open loop with optimal bolus
 
@@ -187,17 +198,30 @@ Gscopenbolus = mvpOutput(Xopenbolus, p); % [mg/dL]
 % Create figure with absolute size for reproducibility
 figure;
 
+Gcrit = [3,3.9,10,13.9,2*13.9]*18;
+Gcritcolors = {[255, 71, 71]/255;
+               [255, 154, 71]/255;
+               [71, 255, 126]/255;
+               [255, 237, 71]/255;
+               [255, 129, 71]/255};
+
 % Plot blood glucose concentration
 subplot(411);
 for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
-plot(Topen*min2h, Gscopen,Tclosed*min2h,Gscclosed,Topenbolus*min2h,Gscopenbolus);
+plot(Tclosed*min2h,Gscclosed,Tclosed*min2h,GscclosedNoise);
 xlim([t0, tf]*min2h);
+ylim([0, max(Gscclosed)*1.2]);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
-legend('Open loop', 'Closed loop', 'Open loop with optimal bolus')
+legend('Normal', 'Noise')
 
+%%
+figure(2)
+plot(Tclosed*min2h,Gscclosed,Tclosed*min2h,GscclosedNoise);
+%%
+%{
 % Plot meal carbohydrate
 subplot(412);
 stem(tspan(1:end-1)*min2h, Ts*Duse(1, :), 'MarkerSize', 0.1,'Color','k');
@@ -220,7 +244,7 @@ stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :), 'MarkerSize', 1, 'Color', [0.929
 xlim([t0, tf]*min2h);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');
-
+%}
 %% Penalty function comparison
 
 phiopen = asymmetricQuadraticPenaltyFunction(Topen,Gscopen,p);

@@ -490,7 +490,7 @@ days = 1;
 
 % Plotter glucose concentrationen i blodet
 
-figure(1)
+figure(2)
 plot(T,X(:,4),"linewidth",3)
 xlabel("t [min]","fontsize",fs);
 ylabel("G [mg/dL]","fontsize",fs);

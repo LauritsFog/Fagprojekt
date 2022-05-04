@@ -128,7 +128,7 @@ for k = 1:N
     if dk ~= 0
         tpause = haltingiter;
         
-        Ubolus = simulateOptBolusPID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, tpause);
+        Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, tpause);
         
         [ubok, flag] = computeOptimalBolus(ubo0, idxbo, xk, tspanbolus, Ubolus, D, p, ...
         scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);

@@ -55,6 +55,7 @@ addpath('MVP');
 addpath('Meal_Detection');
 addpath('Bolus');
 addpath('bin');
+addpath('MVP_Noise');
 
 % Let the user know that the library is being loaded
 fprintf('Done\n');
