@@ -128,9 +128,11 @@ for k = 1:N
     if dk ~= 0
         tpause = haltingiter;
         
+        Ubolus = simulateOptBolusPID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, tpause);
+        
         [ubok, flag] = computeOptimalBolus(ubo0, idxbo, xk, tspanbolus, Ubolus, D, p, ...
         scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
-    
+        
         % If fsolve did not converge, throw an error
         % if(flag ~= 1), error ('fmincon did not converge!'); end
     else
@@ -142,12 +144,10 @@ for k = 1:N
         tpause = tpause - 1;
     end
     
-    % disp("tpause: " + tpause + ", ubok: " + ubok)
-    
     % Compute manipulated inputs
     [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause);
     
-    % Set optimal bolus. 
+    % Set optimal bolus 
     uk(idxbo) = ubok;
     
     % Time interval

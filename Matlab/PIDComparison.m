@@ -138,12 +138,12 @@ idxbo = 2;
 ubo0 = 0; % [mU/min]
 
 % Halting iterations used in PID controller
-haltinghours = 5;
+haltinghours = 6;
 haltingiter = haltinghours*h2min/Ts;
 
 %% Simulation
 [T, X, Y, U] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
-    simModel, observationModel, @pidControllerOptBolus, ...
+    simModel, observationModel, ctrlAlgorithm, ...
     ctrlPar, ctrlState, simMethod, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, opts);
 
 % Blood glucose concentration
@@ -151,6 +151,7 @@ Gsc = Y; % [mg/dL]
 
 %% Visualization
 
+% Setting critical intervals and interval colors
 Gcrit = [3,3.9,10,13.9,max(Gsc)/9]*mmolL2mgdL;
 Gcritcolors = {[255, 71, 71]/255;
                [255, 154, 71]/255;
@@ -164,14 +165,14 @@ figure
 % Plot blood glucose concentration
 subplot(411);
 for i = length(Gcrit):-1:1
-    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i})
+    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
 plot(T*min2h, Gsc,'b');
 xlim([t0, tf]*min2h);
 ylim([0, max(Gsc)*1.2]);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
-legend('Closed loop with optimal bolus')
+% legend('Closed loop with optimal bolus')
 
 % Plot meal carbohydrate
 subplot(412);

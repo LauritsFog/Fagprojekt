@@ -20,15 +20,15 @@ dek = (yk - ykm1)/Ts;
 % Proportional term
 Pk = KP*ek;
 
+% Derivative term
+Dk = KD*dek;
+
 % Integral term
 if tpause == 0
     Ik = Ikm1 + KI*ek*Ts;
-else
+else % Not integrating during bolus titration
     Ik = Ikm1;
 end
-
-% Derivative term
-Dk = KD*dek;
 
 % Basal insulin flow rate
 ubak = ubar + Pk + Ik + Dk;

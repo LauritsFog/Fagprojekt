@@ -189,6 +189,10 @@ figure;
 
 % Plot blood glucose concentration
 subplot(411);
+for i = length(Gcrit):-1:1
+    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
+    hold on
+end
 plot(Topen*min2h, Gscopen,Tclosed*min2h,Gscclosed,Topenbolus*min2h,Gscopenbolus);
 xlim([t0, tf]*min2h);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
