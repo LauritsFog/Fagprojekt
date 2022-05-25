@@ -124,8 +124,6 @@ idxbo = 2;
 % Initial guess of the optimal insulin bolus
 ubo0 = 0; % [mU/min]
 
-%% Simulation optimal bolus
-
 % Controller parameters and state
 ctrlPar = [
       5.0;    % [min]     Sampling time
@@ -135,8 +133,10 @@ ctrlPar = [
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];     % [mU/min]  Nominal basal rate 
 
+%% Simulation optimal bolus
+
 % Halting iterations used in PID controller
-haltinghours = 8;
+haltinghours = 9;
 haltingiter = haltinghours*h2min/Ts;
 
 % Control algorithm
@@ -150,15 +150,6 @@ ctrlAlgorithm = @pidControllerOptBolus;
 GscOptBolus = YOptBolus; % [mg/dL]
 
 %% Simulation super bolus
-
-% Controller parameters and state
-ctrlPar = [
-      5.0;    % [min]     Sampling time
-      0.05;   %           Proportional gain
-      0.0005; %           Integral gain
-      0.2500; %           Derivative gain
-    108.0;    % [mg/dL]   Target blood glucose concentration
-    us(1)];     % [mU/min]  Nominal basal rate
 
 % Halting iterations used in PID controller
 haltinghours = 3;
@@ -187,7 +178,7 @@ Gcritcolors = {[255, 105, 105]/255;
                [255, 219, 156]/255};
 
 % Create figure with absolute size for reproducibility
-figure
+figure(1)
 
 % Plot blood glucose concentration
 subplot(411);
@@ -198,6 +189,7 @@ end
 plot(TOptBolus*min2h, GscOptBolus,'Color',c(1,:));
 hold on
 plot(TSupBolus*min2h, GscSupBasal,'Color',c(2,:));
+yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([0, max([GscOptBolus,GscSupBasal])*1.2]);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
@@ -211,17 +203,24 @@ ylabel({'Meal carbohydrates', '[g CHO]'});
 
 % Plot basal insulin flow rate
 subplot(413);
-stairs(tspan*min2h, UOptBolus(1, [1:end, end]),'LineWidth', 4,'Color',c(1,:));
+stairs(tspan*min2h, UOptBolus(1, [1:end, end]),'LineWidth', 2.5,'Color',c(1,:));
 hold on
-stairs(tspan*min2h, USupBolus(1, [1:end, end]),'LineWidth', 4,'Color',c(2,:));
+stairs(tspan*min2h, USupBolus(1, [1:end, end]),'LineWidth', 2.5,'Color',c(2,:));
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-plot(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'LineStyle','none','Marker', 'o', 'MarkerSize', 4, 'Color', c(1,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 'o', 'MarkerSize', 4, 'Color', c(1,:));
 hold on
-plot(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'LineStyle','none','Marker', '+', 'MarkerSize', 4, 'Color', c(2,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 4, 'Color', c(2,:));
 xlim([t0, tf]*min2h);
+ylim([0, 1.2*Ts*mU2U*max(max(UOptBolus(2, :)),max(USupBolus(2, :)))]);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');
+
+%%
+
+ComputeProcent(GscSupBasal)
+
+ComputeProcent(GscOptBolus)

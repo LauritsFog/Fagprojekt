@@ -14,6 +14,11 @@ ykm1 = ctrlState(2); % [mg/dL]   Previous observed glucose concentration
 % Setpoint error
 ek = yk - ybar;
 
+% For negative basal during bolus
+if tpause ~=0
+    ek = -ek;
+end 
+
 % Derivative
 dek = (yk - ykm1)/Ts;
 

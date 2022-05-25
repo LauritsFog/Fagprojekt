@@ -137,9 +137,6 @@ idxbo = 2;
 % Initial guess of the optimal insulin bolus
 ubo0 = 0; % [mU/min]
 
-% Halting iterations used in PID controller
-haltingiter = 24;
-
 %% Simulate open loop
 
 [Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModelNormal, simMethod, opts);
@@ -156,7 +153,8 @@ Gscopen = mvpOutput(Xopen, p); % [mg/dL]
 % Blood glucose concentration
 Gscclosed = Yclosed; % [mg/dL]
 
-                                    % Noise
+%% Simulate with noise
+
 % Closed-loop simulation - Noise
 [Tclosed, Xclosed, Yclosed, Uclosed] = closedLoopSimulation(x0, tspan, Duse, p, ...
     simModelNoise, observationModel, ctrlAlgorithm, ...
@@ -164,7 +162,6 @@ Gscclosed = Yclosed; % [mg/dL]
 
 % Blood glucose concentration
 GscclosedNoise = Yclosed; % [mg/dL]
-
 
 %% Simulate open loop with optimal bolus
 
@@ -177,7 +174,7 @@ for i = 1:length(tspan(1:end-1))
         
         % Compute the optimal bolus
         [ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan(i:end-1), Uopen(:,i:end-1), Dtemp, p, ...
-            scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
+            scalingFactor, objectiveFunction, simModelNormal, outputModel, simMethod, opts);
 
         % If fsolve did not converge, throw an error
         % if(flag ~= 1), error ('fmincon did not converge!'); end
@@ -188,22 +185,24 @@ for i = 1:length(tspan(1:end-1))
 end
 
 % Simulate
-[Topenbolus, Xopenbolus] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
+[Topenbolus, Xopenbolus] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModelNormal, simMethod, opts);
 
 % Blood glucose concentration
 Gscopenbolus = mvpOutput(Xopenbolus, p); % [mg/dL]
 
 %% Visualization
 
+c = copper(3);
+
 % Create figure with absolute size for reproducibility
 figure;
 
 Gcrit = [3,3.9,10,13.9,2*13.9]*18;
-Gcritcolors = {[255, 71, 71]/255;
-               [255, 154, 71]/255;
-               [71, 255, 126]/255;
-               [255, 237, 71]/255;
-               [255, 129, 71]/255};
+Gcritcolors = {[255, 105, 105]/255;
+               [255, 156, 156]/255;
+               [156, 255, 159]/255;
+               [255, 247, 156]/255;
+               [255, 219, 156]/255};
 
 % Plot blood glucose concentration
 subplot(411);
@@ -211,17 +210,16 @@ for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
-plot(Tclosed*min2h,Gscclosed,Tclosed*min2h,GscclosedNoise);
+p1 = plot(Topen*min2h,Gscopen,'Color',c(1,:));
+hold on
+p2 = plot(Tclosed*min2h,Gscclosed,'Color',c(2,:));
+hold on
+p3 = plot(Topenbolus*min2h,Gscopenbolus,'Color',c(3,:));
 xlim([t0, tf]*min2h);
 ylim([0, max(Gscclosed)*1.2]);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
-legend('Normal', 'Noise')
+legend([p1,p2,p3],'Open loop', 'Closed loop', 'Open loop with optimal bolus')
 
-%%
-figure(2)
-plot(Tclosed*min2h,Gscclosed,Tclosed*min2h,GscclosedNoise);
-%%
-%{
 % Plot meal carbohydrate
 subplot(412);
 stem(tspan(1:end-1)*min2h, Ts*Duse(1, :), 'MarkerSize', 0.1,'Color','k');
@@ -230,21 +228,21 @@ ylabel({'Meal carbohydrates', '[g CHO]'});
 
 % Plot basal insulin flow rate
 subplot(413);
-stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 4);
+stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 2,'Color',c(1,:));
 hold on
-stairs(tspan*min2h, Uclosed(1, [1:end, end]));
+stairs(tspan*min2h, Uclosed(1, [1:end, end]),'LineWidth', 2,'Color',c(2,:));
 hold on
-stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 2);
+stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 2,'Color',c(3,:));
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :), 'MarkerSize', 1, 'Color', [0.9290 0.6940 0.1250]);
+stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :),'filled','LineStyle','-','LineWidth', 0.1,'Marker', 'o', 'MarkerSize', 5, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');
-%}
+
 %% Penalty function comparison
 
 phiopen = asymmetricQuadraticPenaltyFunction(Topen,Gscopen,p);

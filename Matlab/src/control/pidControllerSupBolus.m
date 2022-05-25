@@ -1,4 +1,4 @@
-function [uk, ctrlState] = pidControllerSupBolus(tk, yk, dhatk, ctrlPar, ctrlState, tpause) %#ok
+function [uk, ctrlState] = pidControllerSupBolus(tk, yk, dhatk, ctrlPar, ctrlState, tpause, haltingiter) %#ok
 % Unpack control parameters
 Ts      = ctrlPar(1); % [min]    Sampling time
 KP      = ctrlPar(2); %          Proportional gain
@@ -23,16 +23,33 @@ Pk = KP*ek;
 % Derivative term
 Dk = KD*dek;
 
+% % Integral term
+% if tpause == 0
+%     Ik = Ikm1 + KI*ek*Ts;
+%     
+%     % Basal insulin flow rate
+%     ubak = ubar + Pk + Ik + Dk;
+%     
+% else % Not integrating during bolus titration
+%     Ik = Ikm1;
+%     
+%     ubak = 0;
+% end
+
 % Integral term
 if tpause == 0
-    Ik = Ikm1 + KI*ek*Ts;
-    
+    Ik = Ikm1 + KI*ek*Ts; 
+
     % Basal insulin flow rate
     ubak = ubar + Pk + Ik + Dk;
 else % Not integrating during bolus titration
     Ik = Ikm1;
     
-    ubak = 0;
+    % Basal insulin flow rate
+    ubak = ubar + Pk + Ik + Dk;
+    
+    % Slow titration
+    ubak = ubak*(haltingiter-tpause)/haltingiter;
 end
 
 % Bolus insulin flow rate

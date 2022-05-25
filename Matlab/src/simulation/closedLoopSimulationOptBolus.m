@@ -75,10 +75,8 @@ y0 = observationModel(t0, x0, p);
 tpause = 0;
 
 % Time span used when computing optimal bolus
-tspanbolus = tspan(1:haltingiter);
-
-% Basal during bolus titration
-Ubolus = zeros(2,length(tspanbolus));
+% tspanbolus = tspan(1:haltingiter);
+tspanbolus = tspan;
 
 % Determine the number of manipulated inputs
 uDummy = ctrlAlgorithm(t0, NaN, NaN, ctrlPar, ctrlState0, tpause);
@@ -91,6 +89,10 @@ nc = numel(ctrlState0);
 
 % Number of control intervals
 N = numel(tspan)-1;
+
+% Basal during bolus titration
+Ubolus = repmat([ctrlPar(6);0], 1, length(tspanbolus));
+% Ubolus = repmat([0;0],1,length(tspanbolus));
 
 % Number of time steps in each control interval
 Nk = opts.Nk;
@@ -128,8 +130,7 @@ for k = 1:N
     if dk ~= 0
         tpause = haltingiter;
 
-        Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, tpause);
-
+        % Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, tpause);
         
         [ubok, flag] = computeOptimalBolus(ubo0, idxbo, xk, tspanbolus, Ubolus, D, p, ...
         scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);

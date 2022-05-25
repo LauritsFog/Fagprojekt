@@ -135,7 +135,7 @@ for k = 1:N
     end
     
     % Compute manipulated inputs
-    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause);
+    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause, haltingiter);
     
     % Set optimal bolus 
     uk(idxbo) = ubok;
