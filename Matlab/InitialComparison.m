@@ -46,8 +46,8 @@ mU2U  = 1/U2mU;  % Convert from mU  to Uopen
 ctrlAlgorithm = @pidController;
 
 % Simulation model
-simModelNormal = @mvpModel;
-simModelNoise = @MVPNoise;
+% simModel = @mvpModel;
+simModel = @MVPNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -139,7 +139,7 @@ ubo0 = 0; % [mU/min]
 
 %% Simulate open loop
 
-[Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModelNormal, simMethod, opts);
+[Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
 
 % Blood glucose concentration
 Gscopen = mvpOutput(Xopen, p); % [mg/dL]
@@ -147,21 +147,11 @@ Gscopen = mvpOutput(Xopen, p); % [mg/dL]
 %% Simulate closed loop
 % Closed-loop simulation
 [Tclosed, Xclosed, Yclosed, Uclosed] = closedLoopSimulation(x0, tspan, Duse, p, ...
-    simModelNormal, observationModel, ctrlAlgorithm, ...
+    simModel, observationModel, ctrlAlgorithm, ...
     ctrlPar, ctrlState, simMethod, opts);
 
 % Blood glucose concentration
 Gscclosed = Yclosed; % [mg/dL]
-
-%% Simulate with noise
-
-% Closed-loop simulation - Noise
-[Tclosed, Xclosed, Yclosed, Uclosed] = closedLoopSimulation(x0, tspan, Duse, p, ...
-    simModelNoise, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, opts);
-
-% Blood glucose concentration
-GscclosedNoise = Yclosed; % [mg/dL]
 
 %% Simulate open loop with optimal bolus
 
@@ -174,7 +164,7 @@ for i = 1:length(tspan(1:end-1))
         
         % Compute the optimal bolus
         [ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan(i:end-1), Uopen(:,i:end-1), Dtemp, p, ...
-            scalingFactor, objectiveFunction, simModelNormal, outputModel, simMethod, opts);
+            scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
 
         % If fsolve did not converge, throw an error
         % if(flag ~= 1), error ('fmincon did not converge!'); end
@@ -185,7 +175,7 @@ for i = 1:length(tspan(1:end-1))
 end
 
 % Simulate
-[Topenbolus, Xopenbolus] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModelNormal, simMethod, opts);
+[Topenbolus, Xopenbolus] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
 
 % Blood glucose concentration
 Gscopenbolus = mvpOutput(Xopenbolus, p); % [mg/dL]
@@ -210,6 +200,8 @@ for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
+yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+hold on
 p1 = plot(Topen*min2h,Gscopen,'Color',c(1,:));
 hold on
 p2 = plot(Tclosed*min2h,Gscclosed,'Color',c(2,:));
@@ -238,7 +230,7 @@ ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :),'filled','LineStyle','-','LineWidth', 0.1,'Marker', 'o', 'MarkerSize', 5, 'Color', c(3,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 5, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');

@@ -46,6 +46,7 @@ mmolL2mgdL = 18; % Convert from mmol/L to mg/dL
 
 % Simulation model
 simModel = @mvpModel;
+% simModel = @MVPNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -221,6 +222,8 @@ xlabel('Time [h]');
 
 %%
 
-ComputeProcent(GscSupBasal)
+figure(2)
+V1 = ComputeProcent(GscSupBasal, Gcrit);
 
-ComputeProcent(GscOptBolus)
+figure(3)
+V2 = ComputeProcent(GscOptBolus, Gcrit);

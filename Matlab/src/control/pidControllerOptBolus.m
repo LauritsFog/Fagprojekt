@@ -6,6 +6,7 @@ KI      = ctrlPar(3); %          Integrator gain
 KD      = ctrlPar(4); %          Derivative gain
 ybar    = ctrlPar(5); % [mg/dL]  Target blood glucose concentration
 ubar    = ctrlPar(6); % [mU/min] Nominal insulin flow rate
+Kbo = 1;
 
 % Unpack control state
 Ikm1 = ctrlState(1); %           Value of integral at previous time step
@@ -16,7 +17,7 @@ ek = yk - ybar;
 
 % For negative basal during bolus
 if tpause ~=0
-    ek = -ek;
+    ek = -ek*Kbo;
 end 
 
 % Derivative
