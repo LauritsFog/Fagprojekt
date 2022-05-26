@@ -3,13 +3,15 @@ function [U] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgor
     U = zeros(2,haltingiter);
     
     Ts = ctrlPar(1);
-
+    
     for k = 1:haltingiter
         % Times
         tkp1 = tk+Ts;
         
+        tpause = haltingiter-k;
+        
         % Compute manipulated inputs
-        [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, haltingiter);
+        [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause, haltingiter);
         
         % Time interval
         tspank = linspace(tk, tkp1, Nk+1);

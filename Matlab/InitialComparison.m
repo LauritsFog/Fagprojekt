@@ -142,7 +142,7 @@ ubo0 = 0; % [mU/min]
 [Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
 
 % Blood glucose concentration
-Gscopen = mvpOutput(Xopen, p); % [mg/dL]
+Gscopen = Xopen(7,:); % [mg/dL]
 
 %% Simulate closed loop
 % Closed-loop simulation
@@ -178,7 +178,7 @@ end
 [Topenbolus, Xopenbolus] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
 
 % Blood glucose concentration
-Gscopenbolus = mvpOutput(Xopenbolus, p); % [mg/dL]
+Gscopenbolus = Xopenbolus(7,:); % [mg/dL]
 
 %% Visualization
 

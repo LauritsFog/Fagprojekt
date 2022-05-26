@@ -1,6 +1,6 @@
 function [T, X, Y, U, ctrlState] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState0, simMethod, haltingiter, idxbo, opts)
+    ctrlPar, ctrlState0, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts)
 % CLOSEDLOOPSIMULATION Simulate a closed-loop control algorithm.
 %
 % SYNOPSIS:
@@ -122,9 +122,14 @@ for k = 1:N
     if dk ~= 0
         tpause = haltingiter;
         
-        Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, @pidController, simModel, simMethod, observationModel, tpause);
+        if simPID == 1
+            Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, @pidController, simModel, simMethod, observationModel, tpause);
+            
+            ubok = sum(Ubolus(1,:));
+        else
+            ubok = uk(1)*haltingiter;
+        end
         
-        ubok = sum(Ubolus(1,:));
     else
         ubok = 0;
     end
@@ -135,7 +140,7 @@ for k = 1:N
     end
     
     % Compute manipulated inputs
-    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause, haltingiter);
+    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause, haltingiter, rampingfunction);
     
     % Set optimal bolus 
     uk(idxbo) = ubok;

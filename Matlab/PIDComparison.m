@@ -137,20 +137,23 @@ ctrlPar = [
 %% Simulation optimal bolus
 
 % Halting iterations used in PID controller
-haltinghours = 9;
+haltinghours = 3;
 haltingiter = haltinghours*h2min/Ts;
 
 % Control algorithm
-ctrlAlgorithm = @pidControllerOptBolus;
+ctrlAlgorithm = @pidControllerSupBolus;
+
+% Ramping function
+rampingfunction = @linearRamp;
 
 [TOptBolus, XOptBolus, YOptBolus, UOptBolus] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, opts);
+    ctrlPar, ctrlState, simMethod, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, rampingfunction, opts);
 
 % Blood glucose concentration
 GscOptBolus = YOptBolus; % [mg/dL]
 
-%% Simulation super bolus
+%% Simulation super bolus with PID sim.
 
 % Halting iterations used in PID controller
 haltinghours = 3;
@@ -159,16 +162,38 @@ haltingiter = haltinghours*h2min/Ts;
 % Control algorithm
 ctrlAlgorithm = @pidControllerSupBolus;
 
+% Computing super bolus with PID simulation
+simPID = 1;
+
+[TSupBolusPIDsim, XSupBolusPIDsim, YSupBolusPIDsim, USupBolusPIDsim] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
+
+% Blood glucose concentration
+GscSupBasalPIDsim = YSupBolusPIDsim; % [mg/dL]
+
+%% Simulation super bolus without PID sim.
+
+% Halting iterations used in PID controller
+haltinghours = 3;
+haltingiter = haltinghours*h2min/Ts;
+
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+% Computing super bolus without PID simulation
+simPID = 0;
+
 [TSupBolus, XSupBolus, YSupBolus, USupBolus] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, opts);
+    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
 
 % Blood glucose concentration
 GscSupBasal = YSupBolus; % [mg/dL]
 
 %% Visualization
 
-c = copper(2);
+c = copper(3);
 
 % Setting critical intervals and interval colors
 Gcrit = [3,3.9,10,13.9,2*13.9]*mmolL2mgdL;
@@ -187,14 +212,16 @@ for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
-plot(TOptBolus*min2h, GscOptBolus,'Color',c(1,:));
+p1 = plot(TOptBolus*min2h, GscOptBolus,'Color',c(1,:));
 hold on
-plot(TSupBolus*min2h, GscSupBasal,'Color',c(2,:));
+p2 = plot(TSupBolus*min2h, GscSupBasal,'Color',c(2,:));
+hold on
+p3 = plot(TSupBolusPIDsim*min2h, GscSupBasalPIDsim,'Color',c(3,:));
 yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([0, max([GscOptBolus,GscSupBasal])*1.2]);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
-% legend('Closed loop with optimal bolus')
+legend([p1,p2,p3],'Optimal bolus', 'Super bolus with PID sim.', 'Super bolus without PID sim.')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -207,6 +234,8 @@ subplot(413);
 stairs(tspan*min2h, UOptBolus(1, [1:end, end]),'LineWidth', 2.5,'Color',c(1,:));
 hold on
 stairs(tspan*min2h, USupBolus(1, [1:end, end]),'LineWidth', 2.5,'Color',c(2,:));
+hold on
+stairs(tspan*min2h, USupBolusPIDsim(1, [1:end, end]),'LineWidth', 2.5,'Color',c(3,:));
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
@@ -215,6 +244,8 @@ subplot(414);
 stem(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 'o', 'MarkerSize', 4, 'Color', c(1,:));
 hold on
 stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 4, 'Color', c(2,:));
+hold on
+stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolusPIDsim(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 4, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
 ylim([0, 1.2*Ts*mU2U*max(max(UOptBolus(2, :)),max(USupBolus(2, :)))]);
 ylabel({'Bolus insulin', '[Uopen]'});

@@ -1,4 +1,4 @@
-function [uk, ctrlState] = pidControllerSupBolus(tk, yk, dhatk, ctrlPar, ctrlState, tpause, haltingiter) %#ok
+function [uk, ctrlState] = pidControllerSupBolus(tk, yk, dhatk, ctrlPar, ctrlState, tpause, haltingiter, rampingfunction) %#ok
 % Unpack control parameters
 Ts      = ctrlPar(1); % [min]    Sampling time
 KP      = ctrlPar(2); %          Proportional gain
@@ -10,6 +10,9 @@ ubar    = ctrlPar(6); % [mU/min] Nominal insulin flow rate
 % Unpack control state
 Ikm1 = ctrlState(1); %           Value of integral at previous time step
 ykm1 = ctrlState(2); % [mg/dL]   Previous observed glucose concentration
+
+% Time before titration begins
+tzero = 10;
 
 % Setpoint error
 ek = yk - ybar;
@@ -49,7 +52,7 @@ else % Not integrating during bolus titration
     ubak = ubar + Pk + Ik + Dk;
     
     % Slow titration
-    ubak = ubak*(haltingiter-tpause)/haltingiter;
+    ubak = ubak*rampingfunction(tzero,tpause,haltingiter);
 end
 
 % Bolus insulin flow rate

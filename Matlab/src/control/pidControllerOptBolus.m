@@ -1,4 +1,4 @@
-function [uk, ctrlState] = pidControllerOptbolus(tk, yk, dhatk, ctrlPar, ctrlState, tpause) %#ok
+function [uk, ctrlState] = pidControllerOptbolus(tk, yk, dhatk, ctrlPar, ctrlState, tpause, varargin) %#ok
 % Unpack control parameters
 Ts      = ctrlPar(1); % [min]    Sampling time
 KP      = ctrlPar(2); %          Proportional gain

@@ -81,7 +81,7 @@ for i = 1:length(A)-1
 end
 
 if V(5) > 2
-    text(10,(A(5))/2,"" + round(V(5),2) + "%")
+    text(10,(A(5))/2,"" + round(V(5),2) + "%", 'FontSize', 18, 'HorizontalAlignment', 'center')
 end
 
 end
