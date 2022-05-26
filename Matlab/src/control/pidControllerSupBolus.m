@@ -12,7 +12,7 @@ Ikm1 = ctrlState(1); %           Value of integral at previous time step
 ykm1 = ctrlState(2); % [mg/dL]   Previous observed glucose concentration
 
 % Time before titration begins
-tzero = 10;
+tzero = 0;
 
 % Setpoint error
 ek = yk - ybar;
