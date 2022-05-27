@@ -57,11 +57,7 @@ A(4) = 100-V(1)-V(2)-V(3);
 A(5) = 100-V(1)-V(2)-V(3)-V(4);
 
 % Initialize the colors
-Gcritcolors = {[255, 105, 105]/255;
-               [255, 156, 156]/255;
-               [156, 255, 159]/255;
-               [255, 247, 156]/255;
-               [255, 219, 156]/255};
+Gcritcolors = getCritColors;
        
 for i = 1:1:length(A)
     if A(i)==0

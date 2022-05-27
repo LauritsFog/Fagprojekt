@@ -144,7 +144,7 @@ haltingiter = haltinghours*h2min/Ts;
 ctrlAlgorithm = @pidControllerSupBolus;
 
 % Ramping function
-rampingfunction = @linearRamp;
+rampingfunction = @sigmoidRamp;
 
 [TOptBolus, XOptBolus, YOptBolus, UOptBolus] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
@@ -197,11 +197,7 @@ c = copper(3);
 
 % Setting critical intervals and interval colors
 Gcrit = [3,3.9,10,13.9,2*13.9]*mmolL2mgdL;
-Gcritcolors = {[255, 105, 105]/255;
-               [255, 156, 156]/255;
-               [156, 255, 159]/255;
-               [255, 247, 156]/255;
-               [255, 219, 156]/255};
+Gcritcolors = getCritColors;
 
 % Create figure with absolute size for reproducibility
 figure(1)
@@ -221,7 +217,7 @@ yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([0, max([GscOptBolus,GscSupBasal])*1.2]);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
-legend([p1,p2,p3],'Optimal bolus', 'Super bolus with PID sim.', 'Super bolus without PID sim.')
+legend([p1,p2,p3],'Optimal bolus', 'Super bolus without PID sim.', 'Super bolus with PID sim.')
 
 % Plot meal carbohydrate
 subplot(412);

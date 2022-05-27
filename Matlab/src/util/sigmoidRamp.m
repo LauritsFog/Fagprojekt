@@ -4,6 +4,8 @@ function k = sigmoidRamp(tzero,tpause,haltingiter)
     else
         t = haltingiter - tzero - tpause;
         
-        k = 1/(1+exp(-(t - (haltingiter - tzero)/2)));
+        c = (haltingiter - tzero)/2;
+        
+        k = 1/(1+exp(-(10/c)*t + 10));
     end
 end

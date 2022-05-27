@@ -91,7 +91,6 @@ RA = g2mg*D2/(VG*taum); % [(mg/dL)/min]
 
 % Noise
 a = 2; % Standart deviation
-b = 0; % Mean
 
 % Allocate memory
 f = zeros(7, 1);
@@ -110,4 +109,4 @@ f(6) = -(GEZI + Ieff)*G + EGP0 + RA ;
 
 % Subcutaneous glucose concentration (measured by continuous glucose
 % monitors - CGMs)
-f(7) = (G - Gsc)/tausc + a.*randn(1,1) + b;
+f(7) = (G - Gsc)/tausc + a.*randn;

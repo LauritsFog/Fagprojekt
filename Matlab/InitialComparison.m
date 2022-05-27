@@ -188,11 +188,7 @@ c = copper(3);
 figure;
 
 Gcrit = [3,3.9,10,13.9,2*13.9]*18;
-Gcritcolors = {[255, 105, 105]/255;
-               [255, 156, 156]/255;
-               [156, 255, 159]/255;
-               [255, 247, 156]/255;
-               [255, 219, 156]/255};
+Gcritcolors = getCritColors;
 
 % Plot blood glucose concentration
 subplot(411);
