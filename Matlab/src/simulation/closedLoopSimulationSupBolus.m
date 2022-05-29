@@ -123,9 +123,7 @@ for k = 1:N
         tpause = haltingiter;
         
         if simPID == 1
-            Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, @pidController, simModel, simMethod, observationModel, tpause);
-            
-            plot(linspace(1,haltingiter,haltingiter),Ubolus(1,:))
+            Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, @pidController, simModel, simMethod, observationModel, haltingiter, rampingfunction);
             
             ubok = sum(Ubolus(1,:));
         else

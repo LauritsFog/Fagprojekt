@@ -46,7 +46,7 @@ mmolL2mgdL = 18; % Convert from mmol/L to mg/dL
 
 % Simulation model
 simModel = @mvpModel;
-% simModel = @MVPNoise;
+% simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -243,11 +243,11 @@ stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'filled','LineStyle','-','Lin
 hold on
 stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolusPIDsim(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 4, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
-ylim([0, 1.2*Ts*mU2U*max(max(UOptBolus(2, :)),max(USupBolus(2, :)))]);
+ylim([0, 1.2*Ts*mU2U*max([max(UOptBolus(2, :)),max(USupBolus(2, :)),max(USupBolusPIDsim(2, :))])]);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');
 
-%%
+%% Percent visualization
 
 figure(2)
 V1 = ComputeProcent(GscSupBasal, Gcrit);

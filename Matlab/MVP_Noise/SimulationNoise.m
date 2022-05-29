@@ -1,4 +1,4 @@
-function [T , X] = Simulation(x0,Ts,days,D,parm,plots)
+function [T , X] = SimulationNoise(x0,Ts,days,D,parm,plots)
 
 %{
 x0 = steady state vector
@@ -42,7 +42,7 @@ for i=1:Nsteps
     [u,ii] = PIDControl(ii,r,y,y_prev,us,Kp,Ti,Td,Ts);
     u = max(u,0);
     d = D(i);
-    [ttmp,xtmp] = ode15s(@MVPNoise,tspan+5*(i-1),x0,u,d,parm);
+    [ttmp,xtmp] = ode15s(@mvpNoise,tspan+5*(i-1),x0,u,d,parm);
     X = [X;xtmp];
     T = [T;ttmp];
     x0=xtmp(end,:)';

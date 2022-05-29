@@ -1,4 +1,4 @@
-function f = MVPNoise(t, x, u, d, p) %#ok
+function f = mvpNoise(t, x, u, d, p) %#ok
 % MVPMODEL Evaluate the right-hand side function of the Medtronic Virtual
 % Patient (MPV) model.
 % 

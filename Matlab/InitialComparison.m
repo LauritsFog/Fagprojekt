@@ -47,7 +47,7 @@ ctrlAlgorithm = @pidController;
 
 % Simulation model
 % simModel = @mvpModel;
-simModel = @MVPNoise;
+simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;

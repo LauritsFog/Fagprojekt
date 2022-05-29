@@ -131,9 +131,11 @@ for k = 1:N
     if dk ~= 0
         tpause = haltingiter;
         
-        % Ubolus(:,1:haltingiter) = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, haltingiter);
+        Ubolus(:,1:haltingiter) = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, haltingiter, rampingfunction);
         
-        % Ubolus(:,haltingiter+1:end) = repmat(Ubolus(:,haltingiter),1,length(Ubolus(:,haltingiter+1:end)));
+        Ubolus(:,haltingiter+1:end) = repmat(Ubolus(:,haltingiter),1,length(Ubolus(:,haltingiter+1:end)));
+        
+        % plot(linspace(1,length(Ubolus),length(Ubolus)),Ubolus)
         
         [ubok, flag] = computeOptimalBolus(ubo0, idxbo, xk, tspanbolus, Ubolus, D, p, ...
         scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);

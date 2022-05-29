@@ -1,4 +1,4 @@
-function dx = MVPModel(t,x,u,d,parm)
+function dx = MVPModelAlt(t,x,u,d,parm)
 
 tau1 = parm(1);
 tau2 = parm(2);
