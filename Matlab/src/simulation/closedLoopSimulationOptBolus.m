@@ -92,7 +92,7 @@ nc = numel(ctrlState0);
 N = numel(tspan)-1;
 
 % Basal during bolus titration
-Ubolus = repmat([ctrlPar(6);0], 1, length(tspanbolus));
+% Ubolus = repmat([ctrlPar(6);0], 1, length(tspanbolus));
 
 % Number of time steps in each control interval
 Nk = opts.Nk;
@@ -130,9 +130,9 @@ for k = 1:N
     if dk ~= 0
         tpause = haltingiter;
         
-        % Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, haltingiter, tzero, haltingiter, rampingfunction);
+        Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, N, tzero, haltingiter, rampingfunction);
         
-        % plot(linspace(1,length(Ubolus),length(Ubolus)),Ubolus)
+        plot(linspace(1,length(Ubolus),length(Ubolus)),Ubolus)
         
         Dtemp = zeros(1,length(D));
         Dtemp(1) = D(k);
