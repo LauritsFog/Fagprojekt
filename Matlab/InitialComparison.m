@@ -159,15 +159,15 @@ for i = 1:length(tspan(1:end-1))
     if Duse(i) ~= 0 % If a meal is eaten
         % Create D array with meal at index 1 and 0's for the rest of the
         % time span
-        Dtemp = zeros(1,length(tspan(i:end-1)));
+        Dtemp = zeros(1,length(tspan));
         Dtemp(1) = Duse(i);
         
         % Compute the optimal bolus
-        [ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan(i:end-1), Uopen(:,i:end-1), Dtemp, p, ...
+        [ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan, repmat(us, 1, N), Dtemp, p, ...
             scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
 
         % If fsolve did not converge, throw an error
-        % if(flag ~= 1), error ('fmincon did not converge!'); end
+        if(flag ~= 1), error ('fmincon did not converge!'); end
 
         % Meal and meal bolus
         Uopen(idxbo, i) = ubo;

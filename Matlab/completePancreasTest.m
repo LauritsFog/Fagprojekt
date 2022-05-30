@@ -17,7 +17,7 @@ reset(groot);
 restoredefaultpath;
 
 %% Load libraries
-run('loadLibrary');
+run('loadLib');
 
 %% Formatting
 % Font size
@@ -144,6 +144,9 @@ gridTime = 0.5*h2min/Ts;
 % Ramping function
 rampingfunction = @sigmoidRamp;
 
+% Time before titration begins
+tzero = 0;
+
 %% Simulation
 
 % Halting iterations used in PID controller
@@ -155,7 +158,7 @@ ctrlAlgorithm = @pidControllerSupBolus;
 
 [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, ... 
+    ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
     rampingfunction, dg, dt, gridTime, opts);
 
 % Blood glucose concentration

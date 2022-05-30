@@ -1,6 +1,6 @@
 function [T, X, Y, U, ctrlState] = closedLoopSimulationOptBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState0, simMethod, haltingiter, ...
+    ctrlPar, ctrlState0, simMethod, tzero, haltingiter, ...
     ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, rampingfunction, opts)
 % CLOSEDLOOPSIMULATION Simulate a closed-loop control algorithm.
 %
@@ -80,7 +80,7 @@ tpause = 0;
 tspanbolus = tspan;
 
 % Determine the number of manipulated inputs
-uDummy = ctrlAlgorithm(t0, NaN, NaN, ctrlPar, ctrlState0, tpause);
+uDummy = ctrlAlgorithm(t0, NaN, NaN, ctrlPar, ctrlState0, tzero, tpause);
 
 % Number of states and manipulated inputs
 nx = numel(x0);
@@ -92,8 +92,7 @@ nc = numel(ctrlState0);
 N = numel(tspan)-1;
 
 % Basal during bolus titration
-% Ubolus = repmat([ctrlPar(6);0], 1, length(tspanbolus));
-Ubolus = repmat([0;0],1,length(tspanbolus));
+Ubolus = repmat([ctrlPar(6);0], 1, length(tspanbolus));
 
 % Number of time steps in each control interval
 Nk = opts.Nk;
@@ -131,28 +130,29 @@ for k = 1:N
     if dk ~= 0
         tpause = haltingiter;
         
-        % Ubolus(:,1:haltingiter) = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, haltingiter, rampingfunction);
-        
-        % Ubolus(:,haltingiter+1:end) = repmat(Ubolus(:,haltingiter),1,length(Ubolus(:,haltingiter+1:end)));
+        % Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, haltingiter, tzero, haltingiter, rampingfunction);
         
         % plot(linspace(1,length(Ubolus),length(Ubolus)),Ubolus)
         
-        [ubok, flag] = computeOptimalBolus(ubo0, idxbo, xk, tspanbolus, Ubolus, D, p, ...
+        Dtemp = zeros(1,length(D));
+        Dtemp(1) = D(k);
+        
+        [ubok, flag] = computeOptimalBolus(ubo0, idxbo, xk, tspanbolus, Ubolus, Dtemp, p, ...
         scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
         
         % If fsolve did not converge, throw an error
-        % if(flag ~= 1), error ('fmincon did not converge!'); end
+        if(flag ~= 1), error ('fmincon did not converge!'); end
     else
         ubok = 0;
     end
+    
+    % Compute manipulated inputs
+    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tzero, tpause, haltingiter, rampingfunction);
     
     % Decrement tpause until 0
     if tpause ~= 0
         tpause = tpause - 1;
     end
-    
-    % Compute manipulated inputs
-    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause, haltingiter, rampingfunction);
     
     % Set optimal bolus 
     uk(idxbo) = ubok;

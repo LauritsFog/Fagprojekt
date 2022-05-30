@@ -1,6 +1,6 @@
 function [T, X, Y, U, ctrlState] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState0, simMethod, haltingiter, idxbo, rampingfunction, ...
+    ctrlPar, ctrlState0, simMethod, tzero, haltingiter, idxbo, rampingfunction, ...
     dg, dt, gridTime, opts)
 % CLOSEDLOOPSIMULATION Simulate a closed-loop control algorithm.
 %
@@ -153,7 +153,7 @@ for k = 1:N
     end
     
     % Compute manipulated inputs
-    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause, haltingiter, rampingfunction);
+    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tzero, tpause, haltingiter, rampingfunction);
     
     % Set optimal bolus 
     uk(idxbo) = ubok;
