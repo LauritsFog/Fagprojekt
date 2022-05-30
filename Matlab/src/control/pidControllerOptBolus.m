@@ -1,4 +1,4 @@
-function [uk, ctrlState] = pidControllerOptbolus(tk, yk, dhatk, ctrlPar, ctrlState, tpause) %#ok
+function [uk, ctrlState] = pidControllerOptbolus(tk, yk, dhatk, ctrlPar, ctrlState, tpause, varargin) %#ok
 % Unpack control parameters
 Ts      = ctrlPar(1); % [min]    Sampling time
 KP      = ctrlPar(2); %          Proportional gain
@@ -6,6 +6,7 @@ KI      = ctrlPar(3); %          Integrator gain
 KD      = ctrlPar(4); %          Derivative gain
 ybar    = ctrlPar(5); % [mg/dL]  Target blood glucose concentration
 ubar    = ctrlPar(6); % [mU/min] Nominal insulin flow rate
+Kbo = 1;
 
 % Unpack control state
 Ikm1 = ctrlState(1); %           Value of integral at previous time step
@@ -13,6 +14,11 @@ ykm1 = ctrlState(2); % [mg/dL]   Previous observed glucose concentration
 
 % Setpoint error
 ek = yk - ybar;
+
+% For negative basal during bolus
+if tpause ~=0
+    ek = -ek*Kbo;
+end 
 
 % Derivative
 dek = (yk - ykm1)/Ts;

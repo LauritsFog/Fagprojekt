@@ -1,6 +1,7 @@
 function [T, X, Y, U, ctrlState] = closedLoopSimulationOptBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState0, simMethod, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, opts)
+    ctrlPar, ctrlState0, simMethod, haltingiter, ...
+    ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, rampingfunction, opts)
 % CLOSEDLOOPSIMULATION Simulate a closed-loop control algorithm.
 %
 % SYNOPSIS:
@@ -75,10 +76,8 @@ y0 = observationModel(t0, x0, p);
 tpause = 0;
 
 % Time span used when computing optimal bolus
-tspanbolus = tspan(1:haltingiter);
-
-% Basal during bolus titration
-Ubolus = zeros(2,length(tspanbolus));
+% tspanbolus = tspan(1:haltingiter);
+tspanbolus = tspan;
 
 % Determine the number of manipulated inputs
 uDummy = ctrlAlgorithm(t0, NaN, NaN, ctrlPar, ctrlState0, tpause);
@@ -91,6 +90,10 @@ nc = numel(ctrlState0);
 
 % Number of control intervals
 N = numel(tspan)-1;
+
+% Basal during bolus titration
+% Ubolus = repmat([ctrlPar(6);0], 1, length(tspanbolus));
+Ubolus = repmat([0;0],1,length(tspanbolus));
 
 % Number of time steps in each control interval
 Nk = opts.Nk;
@@ -128,7 +131,11 @@ for k = 1:N
     if dk ~= 0
         tpause = haltingiter;
         
-        % Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, tpause);
+        Ubolus(:,1:haltingiter) = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, haltingiter, rampingfunction);
+        
+        Ubolus(:,haltingiter+1:end) = repmat(Ubolus(:,haltingiter),1,length(Ubolus(:,haltingiter+1:end)));
+        
+        % plot(linspace(1,length(Ubolus),length(Ubolus)),Ubolus)
         
         [ubok, flag] = computeOptimalBolus(ubo0, idxbo, xk, tspanbolus, Ubolus, D, p, ...
         scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
@@ -145,7 +152,7 @@ for k = 1:N
     end
     
     % Compute manipulated inputs
-    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause);
+    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause, haltingiter, rampingfunction);
     
     % Set optimal bolus 
     uk(idxbo) = ubok;

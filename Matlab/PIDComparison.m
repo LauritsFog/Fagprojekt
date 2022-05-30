@@ -46,6 +46,7 @@ mmolL2mgdL = 18; % Convert from mmol/L to mg/dL
 
 % Simulation model
 simModel = @mvpModel;
+% simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -124,8 +125,6 @@ idxbo = 2;
 % Initial guess of the optimal insulin bolus
 ubo0 = 0; % [mU/min]
 
-%% Simulation optimal bolus
-
 % Controller parameters and state
 ctrlPar = [
       5.0;    % [min]     Sampling time
@@ -135,30 +134,7 @@ ctrlPar = [
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];     % [mU/min]  Nominal basal rate 
 
-% Halting iterations used in PID controller
-haltinghours = 8;
-haltingiter = haltinghours*h2min/Ts;
-
-% Control algorithm
-ctrlAlgorithm = @pidControllerOptBolus;
-
-[TOptBolus, XOptBolus, YOptBolus, UOptBolus] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
-    simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, opts);
-
-% Blood glucose concentration
-GscOptBolus = YOptBolus; % [mg/dL]
-
-%% Simulation super bolus
-
-% Controller parameters and state
-ctrlPar = [
-      5.0;    % [min]     Sampling time
-      0.05;   %           Proportional gain
-      0.0005; %           Integral gain
-      0.2500; %           Derivative gain
-    108.0;    % [mg/dL]   Target blood glucose concentration
-    us(1)];     % [mU/min]  Nominal basal rate
+%% Simulation optimal bolus
 
 % Halting iterations used in PID controller
 haltinghours = 3;
@@ -167,27 +143,64 @@ haltingiter = haltinghours*h2min/Ts;
 % Control algorithm
 ctrlAlgorithm = @pidControllerSupBolus;
 
+% Ramping function
+rampingfunction = @sigmoidRamp;
+
+[TOptBolus, XOptBolus, YOptBolus, UOptBolus] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlPar, ctrlState, simMethod, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, rampingfunction, opts);
+
+% Blood glucose concentration
+GscOptBolus = YOptBolus; % [mg/dL]
+
+%% Simulation super bolus with PID sim.
+
+% Halting iterations used in PID controller
+haltinghours = 3;
+haltingiter = haltinghours*h2min/Ts;
+
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+% Computing super bolus with PID simulation
+simPID = 1;
+
+[TSupBolusPIDsim, XSupBolusPIDsim, YSupBolusPIDsim, USupBolusPIDsim] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
+
+% Blood glucose concentration
+GscSupBasalPIDsim = YSupBolusPIDsim; % [mg/dL]
+
+%% Simulation super bolus without PID sim.
+
+% Halting iterations used in PID controller
+haltinghours = 3;
+haltingiter = haltinghours*h2min/Ts;
+
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+% Computing super bolus without PID simulation
+simPID = 0;
+
 [TSupBolus, XSupBolus, YSupBolus, USupBolus] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, opts);
+    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
 
 % Blood glucose concentration
 GscSupBasal = YSupBolus; % [mg/dL]
 
 %% Visualization
 
-c = copper(2);
+c = copper(3);
 
 % Setting critical intervals and interval colors
 Gcrit = [3,3.9,10,13.9,2*13.9]*mmolL2mgdL;
-Gcritcolors = {[255, 105, 105]/255;
-               [255, 156, 156]/255;
-               [156, 255, 159]/255;
-               [255, 247, 156]/255;
-               [255, 219, 156]/255};
+Gcritcolors = getCritColors;
 
 % Create figure with absolute size for reproducibility
-figure
+figure(1)
 
 % Plot blood glucose concentration
 subplot(411);
@@ -195,13 +208,16 @@ for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
-plot(TOptBolus*min2h, GscOptBolus,'Color',c(1,:));
+p1 = plot(TOptBolus*min2h, GscOptBolus,'Color',c(1,:));
 hold on
-plot(TSupBolus*min2h, GscSupBasal,'Color',c(2,:));
+p2 = plot(TSupBolus*min2h, GscSupBasal,'Color',c(2,:));
+hold on
+p3 = plot(TSupBolusPIDsim*min2h, GscSupBasalPIDsim,'Color',c(3,:));
+yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([0, max([GscOptBolus,GscSupBasal])*1.2]);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
-% legend('Closed loop with optimal bolus')
+legend([p1,p2,p3],'Optimal bolus', 'Super bolus without PID sim.', 'Super bolus with PID sim.')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -211,17 +227,30 @@ ylabel({'Meal carbohydrates', '[g CHO]'});
 
 % Plot basal insulin flow rate
 subplot(413);
-stairs(tspan*min2h, UOptBolus(1, [1:end, end]),'LineWidth', 4,'Color',c(1,:));
+stairs(tspan*min2h, UOptBolus(1, [1:end, end]),'LineWidth', 2.5,'Color',c(1,:));
 hold on
-stairs(tspan*min2h, USupBolus(1, [1:end, end]),'LineWidth', 4,'Color',c(2,:));
+stairs(tspan*min2h, USupBolus(1, [1:end, end]),'LineWidth', 2.5,'Color',c(2,:));
+hold on
+stairs(tspan*min2h, USupBolusPIDsim(1, [1:end, end]),'LineWidth', 2.5,'Color',c(3,:));
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-plot(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'LineStyle','none','Marker', 'o', 'MarkerSize', 4, 'Color', c(1,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 'o', 'MarkerSize', 4, 'Color', c(1,:));
 hold on
-plot(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'LineStyle','none','Marker', '+', 'MarkerSize', 4, 'Color', c(2,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 4, 'Color', c(2,:));
+hold on
+stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolusPIDsim(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 4, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
+ylim([0, 1.2*Ts*mU2U*max([max(UOptBolus(2, :)),max(USupBolus(2, :)),max(USupBolusPIDsim(2, :))])]);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');
+
+%% Percent visualization
+
+figure(2)
+V1 = ComputeProcent(GscSupBasal, Gcrit);
+
+figure(3)
+V2 = ComputeProcent(GscOptBolus, Gcrit);

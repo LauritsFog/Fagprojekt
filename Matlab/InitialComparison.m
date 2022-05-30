@@ -46,7 +46,8 @@ mU2U  = 1/U2mU;  % Convert from mU  to Uopen
 ctrlAlgorithm = @pidController;
 
 % Simulation model
-simModel = @mvpModel;
+% simModel = @mvpModel;
+simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -136,15 +137,12 @@ idxbo = 2;
 % Initial guess of the optimal insulin bolus
 ubo0 = 0; % [mU/min]
 
-% Halting iterations used in PID controller
-haltingiter = 24;
-
 %% Simulate open loop
 
 [Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
 
 % Blood glucose concentration
-Gscopen = mvpOutput(Xopen, p); % [mg/dL]
+Gscopen = Xopen(7,:); % [mg/dL]
 
 %% Simulate closed loop
 % Closed-loop simulation
@@ -180,12 +178,17 @@ end
 [Topenbolus, Xopenbolus] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
 
 % Blood glucose concentration
-Gscopenbolus = mvpOutput(Xopenbolus, p); % [mg/dL]
+Gscopenbolus = Xopenbolus(7,:); % [mg/dL]
 
 %% Visualization
 
+c = copper(3);
+
 % Create figure with absolute size for reproducibility
 figure;
+
+Gcrit = [3,3.9,10,13.9,2*13.9]*18;
+Gcritcolors = getCritColors;
 
 % Plot blood glucose concentration
 subplot(411);
@@ -193,10 +196,17 @@ for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
-plot(Topen*min2h, Gscopen,Tclosed*min2h,Gscclosed,Topenbolus*min2h,Gscopenbolus);
+yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+hold on
+p1 = plot(Topen*min2h,Gscopen,'Color',c(1,:));
+hold on
+p2 = plot(Tclosed*min2h,Gscclosed,'Color',c(2,:));
+hold on
+p3 = plot(Topenbolus*min2h,Gscopenbolus,'Color',c(3,:));
 xlim([t0, tf]*min2h);
+ylim([0, max(Gscclosed)*1.2]);
 ylabel({'Blood glucose concentration', '[mg/dL]'});
-legend('Open loop', 'Closed loop', 'Open loop with optimal bolus')
+legend([p1,p2,p3],'Open loop', 'Closed loop', 'Open loop with optimal bolus')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -206,17 +216,17 @@ ylabel({'Meal carbohydrates', '[g CHO]'});
 
 % Plot basal insulin flow rate
 subplot(413);
-stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 4);
+stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 2,'Color',c(1,:));
 hold on
-stairs(tspan*min2h, Uclosed(1, [1:end, end]));
+stairs(tspan*min2h, Uclosed(1, [1:end, end]),'LineWidth', 2,'Color',c(2,:));
 hold on
-stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 2);
+stairs(tspan*min2h, Uopen(1, [1:end, end]),'LineWidth', 2,'Color',c(3,:));
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :), 'MarkerSize', 1, 'Color', [0.9290 0.6940 0.1250]);
+stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 5, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');
