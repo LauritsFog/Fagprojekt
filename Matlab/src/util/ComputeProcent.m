@@ -46,6 +46,7 @@ end
 
 V = [(Optimalp2/T)*100, (Optimalp1/T)*100,(Optimal/T)*100, (Optimalm1/T)*100, (Optimalm2/T)*100];
 
+%{
                             % plot
 
 % Initialize A                           
@@ -79,6 +80,8 @@ end
 if V(5) > 2
     text(10,(A(5))/2,"" + round(V(5),2) + "%", 'FontSize', 18, 'HorizontalAlignment', 'center')
 end
+
+%}
 
 end
 
