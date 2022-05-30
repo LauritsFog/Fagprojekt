@@ -1,6 +1,6 @@
 %% Initial
 close all;clear;clc
-loadLibrary()
+loadLib()
 load('MealPlan.mat')
 %Number of days wanted in simulation
 days=2;
