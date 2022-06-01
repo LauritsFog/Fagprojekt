@@ -132,7 +132,7 @@ for k = 1:N
         
         Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, N, tzero, haltingiter, rampingfunction);
         
-        plot(linspace(1,length(Ubolus),length(Ubolus)),Ubolus)
+        % plot(linspace(1,length(Ubolus),length(Ubolus)),Ubolus)
         
         Dtemp = zeros(1,length(D));
         Dtemp(1) = D(k);

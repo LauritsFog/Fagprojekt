@@ -125,15 +125,6 @@ idxbo = 2;
 % Initial guess of the optimal insulin bolus
 ubo0 = 0; % [mU/min]
 
-% Controller parameters and state
-ctrlPar = [
-      5.0;    % [min]     Sampling time
-      0.05;   %           Proportional gain
-      0.0005; %           Integral gain
-      0.2500; %           Derivative gain
-    108.0;    % [mg/dL]   Target blood glucose concentration
-    us(1)];     % [mU/min]  Nominal basal rate 
-
 % Halting iterations used in PID controller
 haltinghours = 3;
 haltingiter = haltinghours*h2min/Ts;
@@ -149,6 +140,15 @@ tzero = 0;
 
 %% Simulation optimal bolus
 
+% Controller parameters and state
+ctrlPar = [
+      5.0;    % [min]     Sampling time
+      0.05;   %           Proportional gain
+      0.0005; %           Integral gain
+      0.2500; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate 
+
 [TOptBolus, XOptBolus, YOptBolus, UOptBolus] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
     ctrlPar, ctrlState, simMethod, tzero, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, rampingfunction, opts);
@@ -157,6 +157,15 @@ tzero = 0;
 GscOptBolus = YOptBolus; % [mg/dL]
 
 %% Simulation super bolus with PID sim.
+
+% Controller parameters and state
+ctrlPar = [
+      5.0;    % [min]     Sampling time
+      0.43;   %           Proportional gain
+      1e-05;  %           Integral gain
+      2;      %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate 
 
 % Computing super bolus with PID simulation
 simPID = 1;
@@ -169,6 +178,15 @@ simPID = 1;
 GscSupBolusPIDsim = YSupBolusPIDsim; % [mg/dL]
 
 %% Simulation super bolus without PID sim.
+
+% Controller parameters and state
+ctrlPar = [
+      5.0;    % [min]     Sampling time
+      0.15;   %           Proportional gain
+      0.00043429; %       Integral gain
+      1;      %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate 
 
 % Computing super bolus without PID simulation
 simPID = 0;
@@ -240,11 +258,11 @@ xlabel('Time [h]');
 
 figure
 subplot(1,3,1)
-V1 = ComputeProcent(GscOptBolus, Gcrit);
+PlotProcent(ComputeProcent(GscOptBolus, Gcrit));
 title('Optimal bolus')
 subplot(1,3,2)
-V2 = ComputeProcent(GscSupBolusPIDsim, Gcrit);
+PlotProcent(ComputeProcent(GscSupBolusPIDsim, Gcrit));
 title('Super bolus with PID sim.')
 subplot(1,3,3)
-V3 = ComputeProcent(GscSupBolus, Gcrit);
+PlotProcent(ComputeProcent(GscSupBolus, Gcrit));
 title('Super bolus without PID sim.')
