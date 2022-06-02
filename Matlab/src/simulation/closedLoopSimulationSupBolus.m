@@ -1,6 +1,6 @@
 function [T, X, Y, U, ctrlState] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState0, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts)
+    ctrlPar, ctrlState0, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts)
 % CLOSEDLOOPSIMULATION Simulate a closed-loop control algorithm.
 %
 % SYNOPSIS:
@@ -75,7 +75,7 @@ y0 = observationModel(t0, x0, p);
 tpause = 0;
 
 % Determine the number of manipulated inputs
-uDummy = ctrlAlgorithm(t0, NaN, NaN, ctrlPar, ctrlState0, tpause);
+uDummy = ctrlAlgorithm(t0, NaN, NaN, ctrlPar, ctrlState0, tzero, tpause);
 
 % Number of states and manipulated inputs
 nx = numel(x0);
@@ -123,7 +123,9 @@ for k = 1:N
         tpause = haltingiter;
         
         if simPID == 1
-            Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, @pidController, simModel, simMethod, observationModel, haltingiter, rampingfunction);
+            Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, @pidController, simModel, simMethod, observationModel, haltingiter, tzero, haltingiter, rampingfunction);
+            
+            % plot(linspace(1,length(Ubolus),length(Ubolus)),Ubolus);
             
             ubok = sum(Ubolus(1,:));
         else
@@ -140,7 +142,7 @@ for k = 1:N
     end
     
     % Compute manipulated inputs
-    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause, haltingiter, rampingfunction);
+    [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tzero, tpause, haltingiter, rampingfunction);
     
     % Set optimal bolus 
     uk(idxbo) = ubok;

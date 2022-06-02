@@ -89,8 +89,11 @@ tausc   = p(10); % [min]            Subcutaneous insulin time constant
 % Meal rate of appearance
 RA = g2mg*D2/(VG*taum); % [(mg/dL)/min]
 
-% Noise
+% Gsc noise
 a = 2; % Standart deviation
+
+% G noise
+b = 2;
 
 % Allocate memory
 f = zeros(7, 1);
@@ -105,7 +108,7 @@ f(4) = (Isc            - Ip )/tau2 ;
 
 % Glucose subsystem
 f(5) = p2*(SI*Ip - Ieff) ;
-f(6) = -(GEZI + Ieff)*G + EGP0 + RA ;
+f(6) = -(GEZI + Ieff)*G + EGP0 + RA + b.*randn;
 
 % Subcutaneous glucose concentration (measured by continuous glucose
 % monitors - CGMs)

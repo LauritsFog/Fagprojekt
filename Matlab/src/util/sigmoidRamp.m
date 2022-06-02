@@ -6,6 +6,6 @@ function k = sigmoidRamp(tzero,tpause,haltingiter)
         
         c = (haltingiter - tzero)/2;
         
-        k = 1/(1+exp(-(10/c)*t + 10));
+        k = 1/(1+exp(-(6/c)*t + 6));
     end
 end

@@ -80,10 +80,8 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 
 % Initial and final time
-days = 5;
-hours = days*24;
 t0 =  0;       % min
-tf = hours*h2min; % min
+tf = 48*h2min; % min
 
 % Sampling time
 Ts = 5; % min
@@ -107,7 +105,7 @@ Uopen = repmat(us, 1, N);
 D = zeros(1, N);
 
 % Disturbance variables with multiple meals
-Dmealplan = MealPlan(days,false)';
+Dmealplan = MealPlan(2,false)';
 
 % Meal and meal bolus after 1 hour
 tMeal           = 1*h2min;        % [min]
@@ -127,19 +125,9 @@ idxbo = 2;
 % Initial guess of the optimal insulin bolus
 ubo0 = 0; % [mU/min]
 
-% Controller parameters and state
-ctrlPar = [
-      5.0;    % [min]     Sampling time
-      0.05;   %           Proportional gain
-      0.0005; %           Integral gain
-      0.2500; %           Derivative gain
-    108.0;    % [mg/dL]   Target blood glucose concentration
-    us(1)];     % [mU/min]  Nominal basal rate 
-
-% Parameters for grid algorithm
-dg = 10;
-dt = 1;
-gridTime = 0.5*h2min/Ts;
+% Halting iterations used in PID controller
+haltinghours = 3;
+haltingiter = haltinghours*h2min/Ts;
 
 % Ramping function
 rampingfunction = @sigmoidRamp;
@@ -147,68 +135,77 @@ rampingfunction = @sigmoidRamp;
 % Time before titration begins
 tzero = 0;
 
-%% Simulation
-
-% Halting iterations used in PID controller
-haltinghours = 3;
-haltingiter = haltinghours*h2min/Ts;
+%% Setting parameters
 
 % Control algorithm
-ctrlAlgorithm = @pidControllerSupBolus;
+ctrlAlgorithm = @pidController;
 
-[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Duse, p, ...
-    simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-    rampingfunction, dg, dt, gridTime, opts);
+penalties = nan(5,5,5);
 
-% Blood glucose concentration
-Gsc = Y; % [mg/dL]
+% Computing super bolus without PID simulation
+simPID = 1;
 
-%% Visualization
-c = copper(1);
+% 0.05;   %           Proportional gain
+% 0.0005; %           Integral gain
+% 0.2500; %           Derivative gain
 
-% Setting critical intervals and interval colors
-Gcrit = [3,3.9,10,13.9,2*13.9]*mmolL2mgdL;
-Gcritcolors = getCritColors;
+KPs = linspace(0.01, 0.3, 8);
+KIs = linspace(0.00001, 0.001, 8);
+KDs = linspace(0.0001, 2, 8);
 
-% Create figure with absolute size for reproducibility
-figure(1)
+%% Simulating
 
-% Plot blood glucose concentration
-subplot(411);
-for i = length(Gcrit):-1:1
-    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
-    hold on
+for i = 1:length(KPs)
+    for j = 1:length(KIs)
+        for k = 1:length(KDs)
+            % Controller parameters and state
+            ctrlPar = [
+                  5.0;    % [min]     Sampling time
+                  KPs(i);   %           Proportional gain
+                  KIs(j); %           Integral gain
+                  KDs(k); %           Derivative gain
+                108.0;    % [mg/dL]   Target blood glucose concentration
+                us(1)];     % [mU/min]  Nominal basal rate 
+            
+            [Tclosed, Xclosed, Yclosed, Uclosed] = closedLoopSimulation(x0, tspan, Duse, p, ...
+                    simModel, observationModel, ctrlAlgorithm, ...
+                    ctrlPar, ctrlState, simMethod, opts);
+
+%             [TSupBolus, XSupBolus, YSupBolus, USupBolus] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
+%                 simModel, observationModel, ctrlAlgorithm, ...
+%                 ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+
+            penalties(i,j,k) = asymmetricQuadraticPenaltyFunction(Tclosed,Yclosed,p);
+        end
+    end
 end
-p1 = plot(T*min2h, Gsc,'Color',c(1,:));
-yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
-xlim([t0, tf]*min2h);
-ylim([0, max(Gsc)*1.2]);
-ylabel({'Blood glucose concentration', '[mg/dL]'});
-legend([p1],'Complete pancreas')
 
-% Plot meal carbohydrate
-subplot(412);
-stem(tspan(1:end-1)*min2h, Ts*Duse(1, :), 'MarkerSize', 0.1,'Color','k');
-xlim([t0, tf]*min2h);
-ylabel({'Meal carbohydrates', '[g CHO]'});
+%% Plotting
 
-% Plot basal insulin flow rate
-subplot(413);
-stairs(tspan*min2h, U(1, [1:end, end]),'LineWidth', 2.5,'Color',c(1,:));
-xlim([t0, tf]*min2h);
-ylabel({'Basal insulin', '[mU/min]'});
+% penalties = log(penalties);
+penaltiesScaled = rescale(penalties,0,255);
 
-% Plot bolus insulin
-subplot(414);
-stem(tspan(1:end-1)*min2h, Ts*mU2U*U(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 'o', 'MarkerSize', 4, 'Color', c(1,:));
-xlim([t0, tf]*min2h);
-ylim([0, 1.2*Ts*mU2U*max(U(2, :))+1]);
-ylabel({'Bolus insulin', '[Uopen]'});
-xlabel('Time [h]');
+figure;
+t = tiledlayout(2,4);
+for i = 1:length(KPs)
+    h(1) = nexttile;
+%     Im = image([KIs(1), KDs(1)], [KIs(end), KDs(end)], reshape(penaltiesScaled(i,:,:),length(KIs),length(KDs))');
+%     Im.XData = KIs;
+%     Im.YData = KDs;
+    image(gca, KIs, KDs, reshape(penaltiesScaled(i,:,:),length(KIs),length(KDs))');
+    title("KP: " + round(KPs(i),3,"significant"))
+end
+cb = colorbar(h(end));
+cb.TickLabels = round(linspace(min(penalties(:)), max(penalties(:)), 6), 3, "significant");
+cb.Layout.Tile = 'east';
+t.XLabel.String = "KI";
+t.YLabel.String = "KD";
+t.XLabel.FontWeight = 'bold';
+t.YLabel.FontWeight = 'bold';
 
-%% Percent visualization
+%% Finding optimal parameters
 
-figure(2)
+[v,loc] = min(penalties(:));
+[ii,jj,kk] = ind2sub(size(penalties),loc);
 
-V1 = ComputeProcent(Gsc, Gcrit);
+disp(penalties(ii,jj,kk) + " at KP = " + KPs(ii) + ", KI = " + KIs(jj) + ", KD = " + KDs(kk) + " with index " + ii + ", " + kk + ", " + jj)

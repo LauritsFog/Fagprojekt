@@ -17,7 +17,7 @@ reset(groot);
 restoredefaultpath;
 
 %% Load libraries
-run('../loadLibrary');
+run('loadLib');
 
 %% Formatting
 % Font size

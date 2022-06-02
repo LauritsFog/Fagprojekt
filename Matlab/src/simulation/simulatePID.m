@@ -1,17 +1,21 @@
-function [U] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, haltingiter, rampingfunction)
+function [U] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, N, tzero, haltingiter, rampingfunction)
     
-    U = zeros(2,haltingiter);
+    U = zeros(2,N);
     
     Ts = ctrlPar(1);
     
-    for k = 1:haltingiter
+    tpause = haltingiter;
+    
+    for k = 1:N
         % Times
         tkp1 = tk+Ts;
         
-        tpause = haltingiter-k;
-        
         % Compute manipulated inputs
-        [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tpause, haltingiter, rampingfunction);
+        [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek, tzero, tpause, haltingiter, rampingfunction);
+        
+        if tpause ~= 0
+            tpause = tpause-1;
+        end
         
         % Time interval
         tspank = linspace(tk, tkp1, Nk+1);
