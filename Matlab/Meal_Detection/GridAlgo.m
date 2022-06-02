@@ -15,11 +15,12 @@ tauF=10;%minuttes
 Gmin=120;%mg/dL 
 % Var før 130 
 
-Gmin3=1.4;%mg/dL/min
+Gmin3=1.4 ;%mg/dL/min
 % den var 1.5 før
 
 Gmin2=1.6;%mg/dL/min
 % uændret
+
 %% Inisializing
 k=length(Gm);
 

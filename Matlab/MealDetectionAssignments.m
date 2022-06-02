@@ -3,9 +3,8 @@ clear; clc;
 % Function that initializes the data, and loads the functions used.
 loadLib();
 
-Days = 31;
+Days = 7;
 InitData();
-
 
 %% List of functions and scripts used in the assignments
 
@@ -411,7 +410,7 @@ hold off
 simModel = @mvpNoise;
 
 % Creates the mealplan
-D = MealPlan(Days,0);
+D = MealPlan(Days,1);
 D = D';
 
 correctMeal = zeros(1,length(D));
@@ -503,7 +502,7 @@ hold off
 
 %% (13) Implement Euler-maruyama Method
 
-% ???
+
 
 
 %% (14) Sim 100 persons with Euler maruyama + stochastic diff term + grid algo
@@ -685,22 +684,52 @@ legend('Procent found within 1 hour','Average time taken to find meal')
 
 %% test af indre parameter i GRID
 
-dg=15;
-dt=6;
+% Creates the mealplan
+D = MealPlan(Days,0);
+D = D';
+
+correctMeal = zeros(1,length(D));
+correctSnack = zeros(1,length(D));
+for i=1:length(D)
+   if D(i)>4.5
+    correctMeal(i) = 300;
+   end
+   if D(i)<4.5 && D(i)>0
+      correctSnack(i) = 300;
+   end
+end
+
+        % -------------------Simulation-------------------
+[T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+
+% Blood glucose concentration
+Gsc = Y; % [mg/dL]
+
+dg=10;
+dt=10;
 t = T*min2h;
 [GF,dGF,GRID_snack]=GridAlgo(Gsc,dg,dt,12,t);
 x_snack=GRID_Filter(GRID_snack);
 
-figure(1);
-plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal,'g-')
+subplot(2,1,1)
+plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal,'g-',t,correctSnack,'y-')
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
+title('With Filter')
+
+subplot(2,1,2)
+plot(T*min2h, Gsc,'b-',t,GRID_snack*300,'r-',t,correctMeal,'g-',t,correctSnack,'y-')
+xlim([t0, tf]*min2h);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+title('Without Filter')
 
 MealCorrectness(D,x_snack,1)
 
-% 59.35
-% 333.49
+
 
 
 

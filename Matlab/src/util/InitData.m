@@ -82,7 +82,7 @@ N = (tf - t0)/Ts; % [#]
 opts.Nk = 10;
 
 % Time span
-tspan = Ts*(0:N);
+tspan = Ts*(1:N);
 
 % Initial condition
 x0 = xs;
