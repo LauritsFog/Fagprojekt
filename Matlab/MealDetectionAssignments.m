@@ -3,110 +3,8 @@ clear; clc;
 % Function that initializes the data, and loads the functions used.
 loadLib();
 
-% Create a person to simulate over:
-p = CreatePerson();
-% -------------------Formatting----------------------
-% Font size
-fs = 11;
-
-% Line width
-lw = 3;
-
-% Set default font size
-set(groot, 'DefaultAxesFontSize',   fs);
-
-% Set default line widths
-set(groot, 'DefaultLineLineWidth',  lw);
-set(groot, 'DefaultStairLineWidth', lw);
-set(groot, 'DefaultStemLineWidth',  lw);
-
-% Conversion factors
-h2min = 60;      % Convert from h   to min
-min2h = 1/h2min; % Convert from min to h
-U2mU  = 1e3;     % Convert from U   to mU
-mU2U  = 1/U2mU;  % Convert from mU  to U
-days2h = 24;
-
-        % -------------------Create simulation scenario-------------------
-% Control algorithm
-ctrlAlgorithm = @pidController;
-
-% Simulation model
-simModel = @mvpModel;
-
-% Observed variables
-observationModel = @(t, x, p) x(7);
-
-% Simulation method/function
-simMethod = @odeEulersExplicitMethodFixedStepSize;
-
-% Control algorithm
-ctrlAlgorithm = @pidControllerSupBolus;
-
-% Computing super bolus with PID simulation
-simPID = 1;
-
-% Index of the insulin bolus in the vector of manipulated inputs
-idxbo = 2;
-
-% Ramping function
-rampingfunction = @sigmoidRamp;
-
-% Controller parameters and state
-ctrlPar = [
-      5.0;    % [min]     Sampling time
-      0.05;   %           Proportional gain
-      0.0005; %           Integral gain
-      0.2500; %           Derivative gain
-    108.0;    % [mg/dL]   Target blood glucose concentration
-    NaN];     % [mU/min]  Nominal basal rate (overwritten below)
-ctrlState = [
-      0.0;  %          Initial value of integral
-    108.0]; % [mg/dL] Last measurements (dummy value)
-
-% Steady state time (not used)
-ts = [];
-
-% Steady state blood glucose concentration
-Gs = 108; % [mg/dL]
-
-% Compute steady state
-[xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
-
-% If fsolve did not converge, throw an error
-if(flag ~= 1), error ('fsolve did not converge!'); end
-
-% Update the nominal basal rate
-ctrlPar(6) = us(1);
-
-% Number of days the simulation is run
 Days = 31;
-
-% Initial and final time
-t0 =  0;       % min
-tf = Days*days2h*h2min; % min
-
-% Sampling time
-Ts = 5; % min
-
-% Halting iterations used in PID controller
-haltinghours = 3;
-haltingiter = haltinghours*h2min/Ts;
-
-% Number of control/sampling intervals
-N = (tf - t0)/Ts; % [#]
-
-% Number of time steps in each control/sampling interval
-opts.Nk = 10;
-
-% Time span
-tspan = Ts*(1:N);
-
-% Initial condition
-x0 = xs;
-
-% Statement to determin if snacks are included in the mealplan
-snack = 0; % not included
+InitData();
 
 
 %% List of functions and scripts used in the assignments
@@ -266,8 +164,7 @@ title('SupBolus Sim')
 
 
 %% (1) Simulate one person over 1 month with 3 meals
-
-        
+       
 % Creates the mealplan
 D = MealPlan(Days,0);
 D = D';
@@ -277,7 +174,7 @@ D = D';
 % Closed-loop simulation
 [T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
+    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
 
 
 % Blood glucose concentration
@@ -525,10 +422,9 @@ for i=1:length(D)
 end
 
         % -------------------Simulation-------------------
-% Closed-loop simulation
-    [T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
+[T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
+    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
 
 % Blood glucose concentration
 Gsc = Y; % [mg/dL]
