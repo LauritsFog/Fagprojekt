@@ -50,22 +50,6 @@ for i=3:k
         +T2*GF(i-1)...
         +T3*GF(i);
 end
-%% Finding the second derivative Morten (Maybe not used 30-05-2022)
-ddGF(1)=dGF(1);
-ddGF(2)=dGF(2);
-for i=3:k
-    T1=(t(i)-t(i-1))/...
-        ((t(i-2)-t(i-1))*(t(i-2)-t(i)));
-    T2=(t(i)-t(i-2))/...
-        ((t(i-1)-t(i-2))*(t(i-1)-t(i)));
-    T3=(2*t(i)-t(i-2)-t(i-1))/...
-        ((t(i)-t(i-1))*(t(i)-t(i-2)));
-    ddGF(i)=T1*dGF(i-2)...
-        +T2*dGF(i-1)...
-        +T3*dGF(i);
-end
-
-
 
 %% GRID
 GRID=zeros(1,k);

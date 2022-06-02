@@ -45,8 +45,8 @@ mmolL2mgdL = 18; % Convert from mmol/L to mg/dL
 %% Create simulation scenario
 
 % Simulation model
-simModel = @mvpModel;
-% simModel = @mvpNoise;
+% simModel = @mvpModel;
+simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -55,7 +55,8 @@ outputModel = @mvpOutput;
 observationModel = @(t, x, p) x(7);
 
 % Simulation method/function
-simMethod = @odeEulersExplicitMethodFixedStepSize;
+% simMethod = @odeEulersExplicitMethodFixedStepSize;
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 ctrlState = [
       0.0;  %          Initial value of integral
@@ -80,7 +81,7 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 
 % Initial and final time
-days = 5;
+days = 3;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -144,8 +145,8 @@ gridTime = 0.5*h2min/Ts;
 % Ramping function
 rampingfunction = @sigmoidRamp;
 
-% Time before titration begins
-tzero = 0;
+% Time before titration begins [timesteps]
+tzero = (0.5*h2min)/Ts;
 
 %% Simulation
 
@@ -172,7 +173,7 @@ Gcrit = [3,3.9,10,13.9,2*13.9]*mmolL2mgdL;
 Gcritcolors = getCritColors;
 
 % Create figure with absolute size for reproducibility
-figure(1)
+figure
 
 % Plot blood glucose concentration
 subplot(411);
@@ -209,6 +210,6 @@ xlabel('Time [h]');
 
 %% Percent visualization
 
-figure(2)
+figure
 
-V1 = ComputeProcent(Gsc, Gcrit);
+PlotProcent(ComputeProcent(Gsc, Gcrit));

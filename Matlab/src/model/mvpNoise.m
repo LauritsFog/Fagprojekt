@@ -90,10 +90,10 @@ tausc   = p(10); % [min]            Subcutaneous insulin time constant
 RA = g2mg*D2/(VG*taum); % [(mg/dL)/min]
 
 % Gsc noise
-a = 2; % Standart deviation
+a = 0; % Standart deviation
 
 % G noise
-b = 2;
+b = 1;
 
 % Allocate memory
 f = zeros(7, 1);
