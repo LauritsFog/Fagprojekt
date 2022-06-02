@@ -76,7 +76,7 @@ y0 = observationModel(t0, x0, p);
 tpause = 0;
 
 % Determine the number of manipulated inputs
-uDummy = ctrlAlgorithm(t0, NaN, NaN, ctrlPar, ctrlState0, tpause);
+uDummy = ctrlAlgorithm(t0, NaN, NaN, ctrlPar, ctrlState0, tzero, tpause, haltingiter, rampingfunction);
 
 % Number of states and manipulated inputs
 nx = numel(x0);

@@ -46,8 +46,8 @@ mU2U  = 1/U2mU;  % Convert from mU  to Uopen
 ctrlAlgorithm = @pidController;
 
 % Simulation model
-simModel = @mvpModel;
-% simModel = @mvpNoise;
+% simModel = @mvpModel;
+simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -56,7 +56,8 @@ outputModel = @mvpOutput;
 observationModel = @(t, x, p) x(7);
 
 % Simulation method/function
-simMethod = @odeEulersExplicitMethodFixedStepSize;
+% simMethod = @odeEulersExplicitMethodFixedStepSize;
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 % Controller parameters and state
 ctrlPar = [
@@ -92,8 +93,10 @@ objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 ctrlPar(6) = us(1);
 
 % Initial and final time
+days = 1;
+hours = days*24;
 t0 =  0;       % min
-tf = 48*h2min; % min
+tf = hours*h2min; % min
 
 % Sampling time
 Ts = 5; % min
@@ -117,7 +120,7 @@ Uopen = repmat(us, 1, N);
 D = zeros(1, N);
 
 % Disturbance variables with multiple meals
-Dmealplan = MealPlan(2,false)';
+Dmealplan = MealPlan(days,false)';
 
 % Meal and meal bolus after 1 hour
 tMeal           = 1*h2min;        % [min]
@@ -159,11 +162,13 @@ for i = 1:length(tspan(1:end-1))
     if Duse(i) ~= 0 % If a meal is eaten
         % Create D array with meal at index 1 and 0's for the rest of the
         % time span
-        Dtemp = zeros(1,length(tspan));
+        T = round(length(tspan));
+        
+        Dtemp = zeros(1,T-1);
         Dtemp(1) = Duse(i);
         
         % Compute the optimal bolus
-        [ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan, repmat(us, 1, N), Dtemp, p, ...
+        [ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan(1:T), Uopen, Dtemp, p, ...
             scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
 
         % If fsolve did not converge, throw an error

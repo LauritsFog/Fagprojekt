@@ -45,8 +45,8 @@ mmolL2mgdL = 18; % Convert from mmol/L to mg/dL
 %% Create simulation scenario
 
 % Simulation model
-simModel = @mvpModel;
-% simModel = @mvpNoise;
+% simModel = @mvpModel;
+simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -55,7 +55,8 @@ outputModel = @mvpOutput;
 observationModel = @(t, x, p) x(7);
 
 % Simulation method/function
-simMethod = @odeEulersExplicitMethodFixedStepSize;
+% simMethod = @odeEulersExplicitMethodFixedStepSize;
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 ctrlState = [
       0.0;  %          Initial value of integral
@@ -80,8 +81,10 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 
 % Initial and final time
+days = 5;
+hours = days*24;
 t0 =  0;       % min
-tf = 48*h2min; % min
+tf = hours*h2min; % min
 
 % Sampling time
 Ts = 5; % min
@@ -105,7 +108,7 @@ Uopen = repmat(us, 1, N);
 D = zeros(1, N);
 
 % Disturbance variables with multiple meals
-Dmealplan = MealPlan(2,false)';
+Dmealplan = MealPlan(days,false)';
 
 % Meal and meal bolus after 1 hour
 tMeal           = 1*h2min;        % [min]
@@ -159,13 +162,13 @@ GscOptBolus = YOptBolus; % [mg/dL]
 %% Simulation super bolus with PID sim.
 
 % Controller parameters and state
-ctrlPar = [
-      5.0;    % [min]     Sampling time
-      0.43;   %           Proportional gain
-      1e-05;  %           Integral gain
-      2;      %           Derivative gain
-    108.0;    % [mg/dL]   Target blood glucose concentration
-    us(1)];     % [mU/min]  Nominal basal rate 
+% ctrlPar = [
+%       5.0;    % [min]     Sampling time
+%       0.43;   %           Proportional gain
+%       1e-05;  %           Integral gain
+%       2;      %           Derivative gain
+%     108.0;    % [mg/dL]   Target blood glucose concentration
+%     us(1)];     % [mU/min]  Nominal basal rate 
 
 % Computing super bolus with PID simulation
 simPID = 1;
@@ -179,14 +182,14 @@ GscSupBolusPIDsim = YSupBolusPIDsim; % [mg/dL]
 
 %% Simulation super bolus without PID sim.
 
-% Controller parameters and state
-ctrlPar = [
-      5.0;    % [min]     Sampling time
-      0.15;   %           Proportional gain
-      0.00043429; %       Integral gain
-      1;      %           Derivative gain
-    108.0;    % [mg/dL]   Target blood glucose concentration
-    us(1)];     % [mU/min]  Nominal basal rate 
+% % Controller parameters and state
+% ctrlPar = [
+%       5.0;    % [min]     Sampling time
+%       0.15;   %           Proportional gain
+%       0.00043429; %       Integral gain
+%       1;      %           Derivative gain
+%     108.0;    % [mg/dL]   Target blood glucose concentration
+%     us(1)];     % [mU/min]  Nominal basal rate 
 
 % Computing super bolus without PID simulation
 simPID = 0;

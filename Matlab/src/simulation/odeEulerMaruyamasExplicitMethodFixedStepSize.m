@@ -1,4 +1,4 @@
-function [T, X] = odeEulersExplicitMethodFixedStepSize ...
+function [T, X] = odeEulerMaruyamasExplicitMethodFixedStepSize ...
     (fun, tspan, x0, opts, varargin) %#ok
 % ODEEULERSEXPLICITMETHODFIXEDSTEPSIZE Use Euler's explicit method with
 % fixed step size to approximate the solution to an initial value problem.
@@ -76,6 +76,14 @@ xk = x0;
 T(1   ) = tspan(1);
 X(1, :) = x0;
 
+% Storing dt and dW and defining R
+R = 4;
+b = 1;
+dt = tspan(2)-tspan(1);
+dW = sqrt(dt)*randn(1,N*R);
+
+gfun = @(x) [0;0;0;0;0;b;0];
+
 for k = 1:N
     % Next time
     tkp1 = tspan(k+1);
@@ -86,8 +94,10 @@ for k = 1:N
     % Evaluate the right-hand side function
     fk = feval(fun, tk, xk, varargin{:});
     
+    Winc = sum(dW(R*(k-1)+1:R*k));
+    
     % Compute the states at the next time step
-    xkp1 = xk + fk*dtk;
+    xkp1 = xk + fk*dtk + gfun(xk)*Winc;
     
     % Store solution
     T(k+1   ) = tkp1;
