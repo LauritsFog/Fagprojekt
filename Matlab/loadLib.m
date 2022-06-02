@@ -52,6 +52,7 @@ fprintf('Loading diabetes library .. ');
 addpath(genpath(fullfile(pwd, './src')));
 addpath('PID-Controller');
 addpath('MVP');
+addpath('MVP_Noise');
 addpath('Meal_Detection');
 addpath('Bolus');
 addpath('bin');
