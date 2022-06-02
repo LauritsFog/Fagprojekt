@@ -48,7 +48,7 @@ function [T, X] = odeEulersExplicitMethodFixedStepSize ...
 % CONTACT INFORMATION
 %  info@diamatica.com
 %  tobk@dtu.dk
-% athre@dtu.dk
+%  athre@dtu.dk
 %  jbjo@dtu.dk
 % 
 % AUTHORS

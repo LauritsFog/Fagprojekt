@@ -1,7 +1,7 @@
 %% Initialization 
 clear; clc;
 % Function that initializes the data, and loads the functions used.
-loadLibrary();
+loadLib();
 
 % Create a person to simulate over:
 p = CreatePerson();
@@ -40,6 +40,18 @@ observationModel = @(t, x, p) x(7);
 % Simulation method/function
 simMethod = @odeEulersExplicitMethodFixedStepSize;
 
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+% Computing super bolus with PID simulation
+simPID = 1;
+
+% Index of the insulin bolus in the vector of manipulated inputs
+idxbo = 2;
+
+% Ramping function
+rampingfunction = @sigmoidRamp;
+
 % Controller parameters and state
 ctrlPar = [
       5.0;    % [min]     Sampling time
@@ -68,7 +80,7 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 ctrlPar(6) = us(1);
 
 % Number of days the simulation is run
-Days = 3;
+Days = 31;
 
 % Initial and final time
 t0 =  0;       % min
@@ -76,6 +88,10 @@ tf = Days*days2h*h2min; % min
 
 % Sampling time
 Ts = 5; % min
+
+% Halting iterations used in PID controller
+haltinghours = 3;
+haltingiter = haltinghours*h2min/Ts;
 
 % Number of control/sampling intervals
 N = (tf - t0)/Ts; % [#]
@@ -127,6 +143,7 @@ snack = 0; % not included
 
 %}
 
+
 %% Normal sim vs simSupBolus vs simoptbolus
 % Creates the mealplan
 D = MealPlan(Days,0);
@@ -168,16 +185,18 @@ outputModel = @mvpOutput;
 % Ramping function
 rampingfunction = @sigmoidRamp;
 
+% OptBolus calculations
+%{
 [TOptBolus, XOptBolus, YOptBolus, UOptBolus] = closedLoopSimulationOptBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
     ctrlPar, ctrlState, simMethod, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, rampingfunction, opts);
 
 % Blood glucose concentration
 GscOptBolus = YOptBolus; % [mg/dL]
-                
+%}                
 
 
-                % ---------- optbolus sim --------------
+                % ---------- SupBolus sim --------------
               
 % Control algorithm
 ctrlAlgorithm = @pidControllerSupBolus;
@@ -206,12 +225,14 @@ ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('Normal simulation')
 
+%{
 subplot(3,1,2)
 plot(T*min2h, GscOptBolus);
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('OptBolus simulation')
+%}
 
 subplot(3,1,3)
 plot(T*min2h, GscSupBasalPIDsim);
@@ -231,10 +252,12 @@ subplot(1,3,1)
 PlotProcent(V_norm);
 title('Normal Sim')
 
+%{
 [V_opt] = ComputeProcent(GscOptBolus, Gcrit);
 subplot(1,3,2)
 PlotProcent(V_opt);
 title('OptBolus sim')
+%}
 
 [V_sup] = ComputeProcent(GscSupBasalPIDsim, Gcrit);
 subplot(1,3,3)
@@ -249,11 +272,13 @@ title('SupBolus Sim')
 D = MealPlan(Days,0);
 D = D';
 
+
         % -------------------Simulation-------------------
 % Closed-loop simulation
-[T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
+[T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, opts);
+    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
+
 
 % Blood glucose concentration
 Gsc = Y; % [mg/dL]
@@ -304,8 +329,8 @@ xlabel('Time [h]');
 
 %% (2) Test GRID algorithm on result from (1)
 
-dg=10;
-dt=1;
+dg=1;  % 20 går rigtig godt ()
+dt=20;  % 20 går rigtig godt
 t = T*min2h;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
 x=GRID_Filter(GRID);
@@ -332,7 +357,7 @@ end
 
 figure(4);
 subplot(2,1,1);
-h = plot(t,x,'b*',t,correctMeal,'r-')
+h = plot(t,x,'b*',t,correctMeal,'r-');
 set(h,{'LineWidth'},{3;1})
 xlim([t0, tf]*min2h);
 ylim([0.8, 1.3])
@@ -346,6 +371,7 @@ xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 
+MealCorrectness(correctMeal,x,1)
 
 %% (3) Simulate one person over 1 month with 3 meals and snacks
     
@@ -358,9 +384,9 @@ D_snack = D_snack';
 
         % -------------------Simulation-------------------
 % Closed-loop simulation
-[T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
+[T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D_snack, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, opts);
+    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
 
 % Blood glucose concentration
 Gsc_snack = Y; % [mg/dL]
@@ -431,8 +457,13 @@ xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 
+MealCorrectness(correctMeal_snack,x_snack,1)
 
 %% (5) Simulate 100 persons over 1 month + Grid algo test
+
+dg=10;
+dt=1;
+t = T*min2h;
 
 parfor i=1:100
     
@@ -457,14 +488,17 @@ parfor i=1:100
     
     % -------------------Simulation-------------------
     % Closed-loop simulation
-    [T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
+    [T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, opts);
+    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
 
     % Blood glucose concentration
     Gsc = Y; % [mg/dL]
     
-    plot(T*min2h, Gsc);
+    [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+    x=GRID_Filter(GRID);
+    
+    plot(T*min2h, Gsc,'b-',t,x*350,'r-');
     xlim([t0, tf]*min2h);
     hold on
     
@@ -483,11 +517,18 @@ simModel = @mvpNoise;
 D = MealPlan(Days,0);
 D = D';
 
+correctMeal = zeros(1,length(D));
+for i=1:length(D)
+   if D(i)>0
+    correctMeal(i) = 300;
+   end
+end
+
         % -------------------Simulation-------------------
 % Closed-loop simulation
-[T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
+    [T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, opts);
+    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
 
 % Blood glucose concentration
 Gsc = Y; % [mg/dL]
@@ -541,14 +582,17 @@ parfor i=1:100
     
     % -------------------Simulation-------------------
     % Closed-loop simulation
-    [T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
+    [T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, opts);
+    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
 
     % Blood glucose concentration
     Gsc = Y; % [mg/dL]
     
-    plot(T*min2h, Gsc);
+    [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+    x=GRID_Filter(GRID);
+    
+    plot(T*min2h, Gsc,'b-',t,x*350,'r-');
     xlim([t0, tf]*min2h);
     hold on
     
@@ -556,6 +600,211 @@ end
 hold off
 
 
+%% (12) argument MVP with stochastic diffusion term
+
+% ?????
+
+
+%% (13) Implement Euler-maruyama Method
+
+% ???
+
+
+%% (14) Sim 100 persons with Euler maruyama + stochastic diff term + grid algo
+
+% ????
+
+%% Test af dg og dt parameter i Grid algo parameter:
+
+%{
+Generelt så er høje værdier af både dg og dt rigtig gode.
+omkring 5-7 går det hen og bliver ligegyldigt at hæve værdierne
+%}
+
+Procent = [];
+Average = [];
+
+t1 = 15;
+
+for i=1:t1
+
+dg=i;  
+dt=i;
+
+t = T*min2h;
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
+    
+[x y] = MealCorrectness(D,x,1);
+
+Procent(1,i) = x;
+Average(1,i) = y;
+
+end
+
+figure(1);
+yyaxis left
+plot(1:t1,Procent)
+ylabel('Procent');
+yyaxis right
+plot(1:t1,Average)
+xlabel('dg and dt values');
+ylabel('time [min]');
+title('dt and dg has same value')
+legend('Procent found within 1 hour','Average time taken to find meal')
+
+% 
+
+% --------- Test of dg---------------
+
+% dt is now constant atthree different values:
+
+dt1 = 5;
+dt2 = 10;
+dt3 = 15;
+Procent1 = [];
+Average1 = [];
+Procent2 = [];
+Average2 = [];
+Procent3 = [];
+Average3 = [];
+t = T*min2h;
+for i=1:t1
+
+dg=i;  
+dt=dt1;
+
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
+    
+[x y] = MealCorrectness(D,x,1);
+
+Procent1(1,i) = x;
+Average1(1,i) = y;
+
+dt=dt2;
+
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
+    
+[x y] = MealCorrectness(D,x,1);
+
+Procent2(1,i) = x;
+Average2(1,i) = y;
+
+dt=dt3;
+
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
+    
+[x y] = MealCorrectness(D,x,1);
+
+Procent3(1,i) = x;
+Average3(1,i) = y;
+
+end
+
+
+figure(2);
+yyaxis left
+plot(1:t1,Procent1,'r-',1:t1,Procent2,'g-',1:t1,Procent3,'b-')
+ylabel('Procent');
+yyaxis right
+plot(1:t1,Average1,'r--',1:t1,Average2,'g--',1:t1,Average3,'b--')
+xlabel('dg values');
+ylabel('time [min]');
+title('Test of dg')
+legend('Procent found within 1 hour','Average time taken to find meal')
+
+% Ud fra dette ses vi at blå er bedst i average min med en forskel fra ca
+% 44.2 til ca. 40.5
+% blå er den hvor dt = 15. så jo højere dt er jo bedre
+
+% igen ser vi at jo højere dt og dg er jo bedre.
+
+% --------- Test of dt---------------
+
+% dt is now constant atthree different values:
+
+dg1 = 5;
+dg2 = 10;
+dg3 = 15;
+Procent1 = [];
+Average1 = [];
+Procent2 = [];
+Average2 = [];
+Procent3 = [];
+Average3 = [];
+t = T*min2h;
+for i=1:t1
+
+dg=dg1;  
+dt=i;
+
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
+    
+[x y] = MealCorrectness(D,x,1);
+
+Procent1(1,i) = x;
+Average1(1,i) = y;
+
+dg=dg2;
+
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
+    
+[x y] = MealCorrectness(D,x,1);
+
+Procent2(1,i) = x;
+Average2(1,i) = y;
+
+dg=dg3;
+
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
+    
+[x y] = MealCorrectness(D,x,1);
+
+Procent3(1,i) = x;
+Average3(1,i) = y;
+
+end
+
+
+figure(3);
+yyaxis left
+plot(1:t1,Procent1,'r-',1:t1,Procent2,'g-',1:t1,Procent3,'b-')
+ylabel('Procent');
+yyaxis right
+plot(1:t1,Average1,'r--',1:t1,Average2,'g--',1:t1,Average3,'b--')
+xlabel('dt values');
+ylabel('time [min]');
+title('Test of dt')
+legend('Procent found within 1 hour','Average time taken to find meal')
+
+% igen er blå bedst.
+
+% alt i alt er det bedst når dg og dt er høje. 
+
+%% test af indre parameter i GRID
+
+dg=15;
+dt=6;
+t = T*min2h;
+[GF,dGF,GRID_snack]=GridAlgo(Gsc,dg,dt,12,t);
+x_snack=GRID_Filter(GRID_snack);
+
+figure(1);
+plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal,'g-')
+xlim([t0, tf]*min2h);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+
+MealCorrectness(D,x_snack,1)
+
+% 59.35
+% 333.49
 
 
 
