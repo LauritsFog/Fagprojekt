@@ -1,23 +1,13 @@
-function [M,MealEst]=MealSize(Gm,t,n)
+function [M,MealEst]=MealSize(Gm,t)
 %% Best values for parameters
 tauF=6;%minuttes
 dG=10;
 dt=1;
 %% Inisializing
-%filtering to unique rows
-% x=unique([t,Gm], 'rows');
-% t=x(:,2);
-% Gm=x(:,2);
-%Making sure that Gm mod n is zero
-%t=t(1:end-mod(length(Gm),n)+1);
-%Gm=Gm(1:end-mod(length(Gm),n)+1);
-
-%Extracting every n'th element from Gm
-%Gm=Gm(1:n:end);
 k=length(Gm);
 dGF=zeros(1,k);
 ddGF=zeros(1,k);
-%% preprocessing section
+%% preprocessing section same  as for GridAlgo
 GFNS=NoiseSpikeFilter(Gm,dG);
 % Low pass filter
 GF=lowpassfilter(GFNS,dt,tauF,k);
@@ -30,6 +20,7 @@ dGF(1)=0;
 dGF(2)=0;
 ddGF(1)=dGF(1);
 ddGF(2)=dGF(2);
+%Finding an approximation for GF'(t), GF''(t)
 for i=3:k
     T1=(t(i)-t(i-1))/...
         ((t(i-2)-t(i-1))*(t(i-2)-t(i)));
@@ -48,28 +39,35 @@ end
 
 
 
-%% Step 1
+%% Step 1 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%% Inspired by the paper:
+%%%%%%%%% "A Closed-Loop Artificial Pancreas Using Model Predictive Control and a Sliding Meal Size Estimator"
+%%%%%%%%% Authors: Hyunjin Lee, Bruce A. Buckingham, Darrell M. Wilson, and B. Wayne Bequette
 M=zeros(1,k);
 for j=7:k
     for i =1:6
+        %Checking for all "i" if the criterias are meet. If so it sets one
+        %of the bools to true-
+        bool1=false;bool2=false;bool3=false;bool4=false;
         if dGF(j-i)<0&& dGF(j-i+1)>0&& ddGF(j-i)<0&& ddGF(j-i+1)>0
-            bool1=true;bool2=false;bool3=false;bool4=false;
+            bool1=true;
             break;
         elseif i<=5&& dGF(j-i)<0.5&& dGF(j-i+1)>0.5&& ddGF(j-i)<0.005&& ddGF(j-i+1)>0.005
-            bool1=false;bool2=true;bool3=false;bool4=false;
+            bool2=true;
             break;
         elseif i<=5&& dGF(j-i)<1.25&& dGF(j-i+1)>1.25&& ddGF(j-i)<0.0125&& ddGF(j-i+1)>0.0125
-            bool1=false;bool2=false;bool3=true;bool4=false;
+            bool3=true;
             break;
         elseif i<=4&& dGF(j-i)<1.8&& dGF(j-i+1)>1.8&& ddGF(j-i)<0.018&& ddGF(j-i+1)>0.018
-            bool1=false;bool2=false;bool3=false;bool4=true;
+            bool4=true;
             break;
         else
-            bool1=false;bool2=false;bool3=false;bool4=false;
+          %  bool1=false;bool2=false;bool3=false;bool4=false;
         end
     end
     
-    
+    %Constraints in step one and assigning the relevant value to entry j in M
     if bool1&& GF(j)>100&&dGF(j-1)<dGF(j)
         M(j)=1;
     elseif bool2&& GF(j)>100&&dGF(j-1)<dGF(j)
@@ -157,14 +155,25 @@ for i=7:k
     if sum(M(c:i))<=2
         M(c)=0;
     end
-%     sumM=sum(M(c:i));
-%     greaterThanBool=sumM<=15;
     
 end
 
 
+%% intermediate step
+for i=7:k
+    if i-6<=0
+        c=1;
+    else
+        c=i-6;
+    end
+    if sum(M(c:i))>=2&&M(c)~=0
+        M(c)=sum(M(c:i));
+        M(c+1:i)=0;
+    end
+    
+end
+
 MealEst=4*M;
-%% Extrastep
 
 
 
