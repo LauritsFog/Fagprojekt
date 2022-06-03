@@ -21,7 +21,7 @@ run('loadLib');
 
 %% Formatting
 % Font size
-fs = 11;
+fs = 15;
 
 % Line width
 lw = 3;
@@ -93,10 +93,10 @@ objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 ctrlPar(6) = us(1);
 
 % Initial and final time
-days = 1;
+days = 2;
 hours = days*24;
 t0 =  0;       % min
-tf = 18*h2min; % min
+tf = hours*h2min; % min
 
 % Sampling time
 Ts = 5; % min
@@ -140,6 +140,18 @@ idxbo = 2;
 % Initial guess of the optimal insulin bolus
 ubo0 = 0; % [mU/min]
 
+%% Simulate open loop with optimal bolus
+
+tzero = 0;
+haltingiter = 0;
+rampingfunction = @sigmoidRamp;
+
+[Topenbolus, Xopenbolus, Yopenbolus, Uopenbolus] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlPar, ctrlState, simMethod, tzero, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, rampingfunction, opts);
+
+Gscopenbolus = mvpOutput(Xopenbolus);
+
 %% Simulate open loop
 
 [Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
@@ -155,35 +167,6 @@ Gscopen = mvpOutput(Xopen); % [mg/dL]
 
 % Blood glucose concentration
 Gscclosed = mvpOutput(Xclosed); % [mg/dL]
-
-%% Simulate open loop with optimal bolus
-
-for i = 1:length(tspan(1:end-1))
-    if Duse(i) ~= 0 % If a meal is eaten
-        % Create D array with meal at index 1 and 0's for the rest of the
-        % time span
-        T = round(length(tspan));
-        
-        Dtemp = zeros(1,T-1);
-        Dtemp(1) = Duse(i);
-        
-        % Compute the optimal bolus
-        [ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan, Uopen, Dtemp, p, ...
-            scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
-
-        % If fsolve did not converge, throw an error
-        if(flag ~= 1), error ('fmincon did not converge!'); end
-
-        % Meal and meal bolus
-        Uopen(idxbo, i) = ubo;
-    end
-end
-
-% Simulate
-[Topenbolus, Xopenbolus] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
-
-% Blood glucose concentration
-Gscopenbolus = mvpOutput(Xopenbolus); % [mg/dL]
 
 %% Visualization
 
@@ -201,7 +184,7 @@ for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
-yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+p0 = yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 hold on
 p1 = plot(Topen*min2h,Gscopen,'Color',c(1,:));
 hold on
@@ -210,8 +193,8 @@ hold on
 p3 = plot(Topenbolus*min2h,Gscopenbolus,'Color',c(3,:));
 xlim([t0, tf]*min2h);
 ylim([0, max(Gscclosed)*1.2]);
-ylabel({'Blood glucose concentration', '[mg/dL]'});
-legend([p1,p2,p3],'Open loop', 'Closed loop', 'Open loop with optimal bolus')
+ylabel({"CGM measurements", '[mg/dL]'});
+legend([p0,p1,p2,p3],'Steady state', 'Open loop', 'Closed loop', 'Open loop with optimal bolus')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -231,16 +214,22 @@ ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopen(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 5, 'Color', c(3,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopenbolus(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 's', 'MarkerSize', 5, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
+ylim([0, 1.2*max(Ts*mU2U*Uopenbolus(2, :))]);
 ylabel({'Bolus insulin', '[Uopen]'});
 xlabel('Time [h]');
 
-%% Penalty function comparison
-
-phiopen = asymmetricQuadraticPenaltyFunction(Topen,Gscopen,p);
-phiclosed = asymmetricQuadraticPenaltyFunction(Tclosed,Gscclosed,p);
-phiopenoptbolus = asymmetricQuadraticPenaltyFunction(Topenbolus,Gscopenbolus,p);
+%% Percent plot
 
 figure
-bar([1,2,3],[phiopen,phiclosed,phiopenoptbolus])
+subplot(1,3,1)
+PlotProcent(ComputeProcent(Gscopenbolus, Gcrit));
+title("Open loop with" + newline + "optimal bolus")
+subplot(1,3,2)
+PlotProcent(ComputeProcent(Gscopen, Gcrit));
+title("Open loop" + newline)
+subplot(1,3,3)
+PlotProcent(ComputeProcent(Gscclosed, Gcrit));
+title("Closed loop" + newline)
+

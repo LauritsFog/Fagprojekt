@@ -51,11 +51,5 @@ function [G] = mvpOutput(X,b)
 % John Bagterp Jørgensen
 
 % Glucose subsystem
-
-G = X(7,:)+b*randn(1,length(X(7,:)));% [mg/dL] Blood glucose concentration
-
-
-
-
-
-
+b = 1;
+G = X(7, :) + b*randn(1,length(X(7, :))); % [mg/dL] Blood glucose concentration

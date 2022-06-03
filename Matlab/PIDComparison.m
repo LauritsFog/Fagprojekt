@@ -21,7 +21,7 @@ run('loadLib');
 
 %% Formatting
 % Font size
-fs = 11;
+fs = 15;
 
 % Line width
 lw = 3;
@@ -45,8 +45,8 @@ mmolL2mgdL = 18; % Convert from mmol/L to mg/dL
 %% Create simulation scenario
 
 % Simulation model
-% simModel = @mvpModel;
-simModel = @mvpNoise;
+simModel = @mvpModel;
+% simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -55,8 +55,8 @@ outputModel = @mvpOutput;
 observationModel = @(t, x, p) x(7);
 
 % Simulation method/function
-% simMethod = @odeEulersExplicitMethodFixedStepSize;
-simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+simMethod = @odeEulersExplicitMethodFixedStepSize;
+% simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 ctrlState = [
       0.0;  %          Initial value of integral
@@ -81,7 +81,7 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 
 % Initial and final time
-days = 5;
+days = 3;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -157,7 +157,7 @@ ctrlPar = [
     ctrlPar, ctrlState, simMethod, tzero, haltingiter, ubo0, idxbo, scalingFactor, objectiveFunction, outputModel, rampingfunction, opts);
 
 % Blood glucose concentration
-GscOptBolus = YOptBolus; % [mg/dL]
+GscOptBolus = mvpOutput(XOptBolus); % [mg/dL]
 
 %% Simulation super bolus with PID sim.
 
@@ -178,7 +178,7 @@ simPID = 1;
     ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
 
 % Blood glucose concentration
-GscSupBolusPIDsim = YSupBolusPIDsim; % [mg/dL]
+GscSupBolusPIDsim = mvpOutput(XSupBolusPIDsim); % [mg/dL]
 
 %% Simulation super bolus without PID sim.
 
@@ -199,7 +199,7 @@ simPID = 0;
     ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
 
 % Blood glucose concentration
-GscSupBolus = YSupBolus; % [mg/dL]
+GscSupBolus = mvpOutput(XSupBolus); % [mg/dL]
 
 %% Visualization
 
@@ -226,7 +226,7 @@ p3 = plot(TSupBolusPIDsim*min2h, GscSupBolusPIDsim,'Color',c(3,:));
 yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([0, max([GscOptBolus,GscSupBolus])*1.2]);
-ylabel({'Blood glucose concentration', '[mg/dL]'});
+ylabel({'CGM measurements', '[mg/dL]'});
 legend([p1,p2,p3],'Optimal bolus', 'Super bolus without PID sim.', 'Super bolus with PID sim.')
 
 % Plot meal carbohydrate
@@ -247,11 +247,11 @@ ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
-stem(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 'o', 'MarkerSize', 4, 'Color', c(1,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 'o', 'MarkerSize', 5, 'Color', c(1,:));
 hold on
-stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 4, 'Color', c(2,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 's', 'MarkerSize', 5, 'Color', c(2,:));
 hold on
-stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolusPIDsim(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 's', 'MarkerSize', 4, 'Color', c(3,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolusPIDsim(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 's', 'MarkerSize', 5, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
 ylim([0, 1.2*Ts*mU2U*max([max(UOptBolus(2, :)),max(USupBolus(2, :)),max(USupBolusPIDsim(2, :))])]);
 ylabel({'Bolus insulin', '[Uopen]'});

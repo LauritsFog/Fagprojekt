@@ -65,10 +65,11 @@ InitData();
     ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
 %%
 % Blood glucose concentration
-%GscSupBolusPIDsim = MVPOutput(XSupBolusPIDsim);
-GscSupBolusPIDsim = YSupBolusPIDsim; % [mg/dL]
+GscSupBolusPIDsim = mvpOutput(XSupBolusPIDsim,4);
+%GscSupBolusPIDsim = YSupBolusPIDsim; % [mg/dL]
 %plot(GscSupBolusPIDsim)
-[testmealNoice, mealestNoice]=MealSize(GscSupBolusPIDsim,tspan,30);
+
+[testmealNoice, mealestNoice]=MealSize(GscSupBolusPIDsim,tspan);
 
 figure(2)
 hold on
