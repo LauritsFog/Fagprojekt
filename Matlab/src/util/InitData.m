@@ -130,6 +130,10 @@ tzero = 0;
 % Computing super bolus with PID simulation
 simPID = 1;
 
+Gcrit = [3,3.9,10,13.9,2*13.9]*mmolL2mgdL;
+Gcritcolors = getCritColors;
+c = copper(10);
+
  % --------------------- Control Parameters --------------------- 
 
 % Controller parameters and state
@@ -150,5 +154,16 @@ ctrlParSupBolus = [
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];     % [mU/min]  Nominal basal rate 
 
+% Controller parameters complete
+ctrlParComplete = [
+      5.0;    % [min]     Sampling time
+      0.05;   %           Proportional gain
+      0.00005; %           Integral gain
+      0.5; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate 
 
-
+% Parameters for grid algorithm
+dg = 1;
+dt = 1;
+gridTime = 3*h2min/Ts;

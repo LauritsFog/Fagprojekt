@@ -172,24 +172,38 @@ title('SupBolus Sim')
 D = MealPlan(Days,0);
 D = D';
 
+% Halting iterations used in PID controller
+haltinghours = 2;
+haltingiter = haltinghours*h2min/Ts;
+
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+Noise = 0;
 
         % -------------------Simulation-------------------
 % Closed-loop simulation
-[T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
+[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
-
+    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime, opts);
 
 % Blood glucose concentration
-Gsc = Y; % [mg/dL]
+Gsc = mvpOutput(X,Noise); % [mg/dL]
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
 figure(1);
 
 % Plot blood glucose concentration
-plot(T*min2h, Gsc);
+for i = length(Gcrit):-1:1
+    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
+    hold on
+end
+plot(T*min2h, Gsc, 'Color',c(1,:));
+yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('Simulation 1 person - 31 days - 3 Meals/day')
@@ -229,7 +243,7 @@ xlabel('Time [h]');
 
 %% (2) Test GRID algorithm on result from (1)
 
-dg=1;  % 20 går rigtig godt ()
+dg=20;  % 20 går rigtig godt ()
 dt=20;  % 20 går rigtig godt
 t = T*min2h;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
@@ -414,13 +428,14 @@ hold off
 
 simModel = @mvpModel;
 
-%{
-% Adds the MVP model that includes the noise measurement
-simModel = @mvpNoise;
+% Halting iterations used in PID controller
+haltinghours = 2;
+haltingiter = haltinghours*h2min/Ts;
 
-% Simulation method/function
-simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
-%}
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+Noise = 2;
 
 % Creates the mealplan
 D = MealPlan(Days,0);
@@ -429,29 +444,48 @@ D = D';
 correctMeal = zeros(1,length(D));
 for i=1:length(D)
    if D(i)>0
-    correctMeal(i) = 300;
+    correctMeal(i) = 1;
    end
 end
 
-        % -------------------Simulation-------------------
-[T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
+% Closed-loop simulation
+[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime, opts);
 
 % Blood glucose concentration
-Gsc = mvpOutput(X,1);
+Gsc = mvpOutput(X,Noise); % [mg/dL]
+
+% ------------------- GRID -------------------
+
+dg= 1;
+dt=1;
+t = T*min2h;
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
 figure(2);
-
+subplot(211);
+hold on
 % Plot blood glucose concentration
-plot(T*min2h, Gsc);
+for i = length(Gcrit):-1:1
+    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
+    hold on
+end
+plot(T*min2h, Gsc, 'Color',c(1,:)); 
+yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('Simulation 1 person - 31 days - 3 Meals/day')
+hold off
 
+subplot(212)
+plot(T*min2h, Gsc,'k-',T*min2h, x*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
 
 % -------------- Evaluation of simulation -------------------
 
