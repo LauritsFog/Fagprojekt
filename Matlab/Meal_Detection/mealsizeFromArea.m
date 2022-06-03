@@ -19,7 +19,6 @@ parm=[49;47;20.10;0.01060;0.00810;0.002200;1.3300;253;47;5];
 % Need to change D1 in order to get other number of days
 [t,Gm]=Simulation(x0,Ts,days,D1,parm,0);
 
-
 %plot(t,Gm(:,4))
 %dg=3;
 %dt=1;
@@ -34,11 +33,50 @@ plot(t,GRID);
 meals=GRID_Filter(GRID);
 figure(4)
 hold on
-plot(t,meals*350,'r')
+yyaxis left
+plot(t,meals,'r')
 %plot(t,GRID*350,'g')
+yyaxis right
 plot(t,Gm(:,4),'b')
 hold off
 
+
+%% Meal size test
+[testmeal, mealest]=MealSize(Gm(:,4),t,30);
+min(testmeal)
+max(testmeal)
+testmeal(testmeal > 0)
+plot(testmeal)
+%plot(mealest)
+% hold on
+% yyaxis left
+% plot(testmeal)
+% yyaxis right
+% plot(GRID)
+% hold off
+
+%% Noise
+Days=2;
+InitData();
+
+
+[TSupBolusPIDsim, XSupBolusPIDsim, YSupBolusPIDsim, USupBolusPIDsim] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+%%
+% Blood glucose concentration
+%GscSupBolusPIDsim = MVPOutput(XSupBolusPIDsim);
+GscSupBolusPIDsim = YSupBolusPIDsim; % [mg/dL]
+%plot(GscSupBolusPIDsim)
+[testmealNoice, mealestNoice]=MealSize(GscSupBolusPIDsim,tspan,30);
+
+figure(2)
+hold on
+yyaxis right
+plot(GscSupBolusPIDsim)
+yyaxis left
+plot(testmealNoice)
+hold off
 
 
 

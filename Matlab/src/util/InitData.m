@@ -34,8 +34,8 @@ days2h = 24;
 
 
 % Simulation model
-simModel = @mvpModel;
-% simModel = @mvpNoise;
+%simModel = @mvpModel;
+ simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
