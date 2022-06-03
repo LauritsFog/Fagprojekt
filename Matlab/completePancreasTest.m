@@ -81,7 +81,7 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 
 % Initial and final time
-days = 3;
+days = 5;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -132,15 +132,19 @@ ubo0 = 0; % [mU/min]
 ctrlPar = [
       5.0;    % [min]     Sampling time
       0.05;   %           Proportional gain
-      0.0005; %           Integral gain
-      0.2500; %           Derivative gain
+      0.00005; %           Integral gain
+      0.5; %           Derivative gain
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];     % [mU/min]  Nominal basal rate 
 
+% 0.05;   %           Proportional gain
+% 0.0005; %           Integral gain
+% 0.2500; %           Derivative gain
+
 % Parameters for grid algorithm
-dg = 10;
+dg = 1;
 dt = 1;
-gridTime = 0.5*h2min/Ts;
+gridTime = 3*h2min/Ts;
 
 % Ramping function
 rampingfunction = @sigmoidRamp;
@@ -151,7 +155,7 @@ tzero = (0.5*h2min)/Ts;
 %% Simulation
 
 % Halting iterations used in PID controller
-haltinghours = 3;
+haltinghours = 2;
 haltingiter = haltinghours*h2min/Ts;
 
 % Control algorithm
@@ -163,7 +167,7 @@ ctrlAlgorithm = @pidControllerSupBolus;
     rampingfunction, dg, dt, gridTime, opts);
 
 % Blood glucose concentration
-Gsc = Y; % [mg/dL]
+Gsc = mvpOutput(X); % [mg/dL]
 
 %% Visualization
 c = copper(1);

@@ -124,12 +124,13 @@ for k = 1:N
     dk = D(:, k);
     
     % Detecting meals
-    if k > gridTime+2
+    if k > gridTime
         [G,dG,GRID]=GridAlgo(Y(k-gridTime:k),dg,dt,[],tspan(k-gridTime:k));
     end
     
-    % If meal is detected and no meal has been detected for the past 
-    if nnz(GRID) > 0 && nnz(Dest(k-gridTime:k)) == 0
+    % If meal is detected and no meal has been detected for in past
+    % gridTime
+    if k > gridTime && nnz(GRID) > 0 && nnz(Dest(k-gridTime:k)) == 0
         dkest = 20;
     else
         dkest = 0;

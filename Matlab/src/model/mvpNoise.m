@@ -1,4 +1,4 @@
-function f = mvpNoise(t, x, u, d, p) %#ok
+function [f, g] = mvpNoise(t, x, u, d, p) %#ok
 % MVPMODEL Evaluate the right-hand side function of the Medtronic Virtual
 % Patient (MPV) model.
 % 
@@ -89,12 +89,6 @@ tausc   = p(10); % [min]            Subcutaneous insulin time constant
 % Meal rate of appearance
 RA = g2mg*D2/(VG*taum); % [(mg/dL)/min]
 
-% Gsc noise
-a = 0; % Standart deviation
-
-% G noise
-b = 1;
-
 % Allocate memory
 f = zeros(7, 1);
 
@@ -108,8 +102,13 @@ f(4) = (Isc            - Ip )/tau2 ;
 
 % Glucose subsystem
 f(5) = p2*(SI*Ip - Ieff) ;
-f(6) = -(GEZI + Ieff)*G + EGP0 + RA + b.*randn;
+f(6) = -(GEZI + Ieff)*G + EGP0 + RA;
 
 % Subcutaneous glucose concentration (measured by continuous glucose
 % monitors - CGMs)
-f(7) = (G - Gsc)/tausc + a.*randn;
+f(7) = (G - Gsc)/tausc;
+
+% g-function
+b = 1;
+g = [0;0;0;0;0;b;0];
+

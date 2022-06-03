@@ -53,7 +53,7 @@ end
 
 %% GRID
 GRID=zeros(1,k);
-for i=1:k
+for i=3:k
     %if GF(i)>Gmin && (max((dGF(end-2:end)>Gmin3)) || max((dGF(end-1:end)>Gmin2)))
     if GF(i)>Gmin && (max((dGF(i-2:i)>Gmin3))...
             || max((dGF(i-1:i)>Gmin2))) 

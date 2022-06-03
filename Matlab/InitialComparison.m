@@ -46,8 +46,8 @@ mU2U  = 1/U2mU;  % Convert from mU  to Uopen
 ctrlAlgorithm = @pidController;
 
 % Simulation model
-% simModel = @mvpModel;
-simModel = @mvpNoise;
+simModel = @mvpModel;
+% simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -56,8 +56,8 @@ outputModel = @mvpOutput;
 observationModel = @(t, x, p) x(7);
 
 % Simulation method/function
-% simMethod = @odeEulersExplicitMethodFixedStepSize;
-simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+simMethod = @odeEulersExplicitMethodFixedStepSize;
+% simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 % Controller parameters and state
 ctrlPar = [
@@ -96,7 +96,7 @@ ctrlPar(6) = us(1);
 days = 1;
 hours = days*24;
 t0 =  0;       % min
-tf = hours*h2min; % min
+tf = 18*h2min; % min
 
 % Sampling time
 Ts = 5; % min
@@ -145,7 +145,7 @@ ubo0 = 0; % [mU/min]
 [Topen, Xopen] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
 
 % Blood glucose concentration
-Gscopen = Xopen(7,:); % [mg/dL]
+Gscopen = mvpOutput(Xopen); % [mg/dL]
 
 %% Simulate closed loop
 % Closed-loop simulation
@@ -154,7 +154,7 @@ Gscopen = Xopen(7,:); % [mg/dL]
     ctrlPar, ctrlState, simMethod, opts);
 
 % Blood glucose concentration
-Gscclosed = Yclosed; % [mg/dL]
+Gscclosed = mvpOutput(Xclosed); % [mg/dL]
 
 %% Simulate open loop with optimal bolus
 
@@ -168,7 +168,7 @@ for i = 1:length(tspan(1:end-1))
         Dtemp(1) = Duse(i);
         
         % Compute the optimal bolus
-        [ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan(1:T), Uopen, Dtemp, p, ...
+        [ubo, flag] = computeOptimalBolus(ubo0, idxbo, x0, tspan, Uopen, Dtemp, p, ...
             scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
 
         % If fsolve did not converge, throw an error
@@ -183,7 +183,7 @@ end
 [Topenbolus, Xopenbolus] = openLoopSimulation(x0, tspan, Uopen, Duse, p, simModel, simMethod, opts);
 
 % Blood glucose concentration
-Gscopenbolus = Xopenbolus(7,:); % [mg/dL]
+Gscopenbolus = mvpOutput(Xopenbolus); % [mg/dL]
 
 %% Visualization
 
