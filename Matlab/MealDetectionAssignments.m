@@ -6,6 +6,7 @@ loadLib();
 Days = 7;
 InitData();
 
+
 %% List of functions and scripts used in the assignments
 
 % Functions used:
@@ -269,6 +270,7 @@ xlabel('Time [h]');
 
 MealCorrectness(correctMeal,x,1)
 
+
 %% (3) Simulate one person over 1 month with 3 meals and snacks
     
 % Now snacks are included
@@ -355,6 +357,7 @@ xlabel('Time [h]');
 
 MealCorrectness(correctMeal_snack,x_snack,1)
 
+
 %% (5) Simulate 100 persons over 1 month + Grid algo test
 
 dg=10;
@@ -410,7 +413,7 @@ hold off
 simModel = @mvpNoise;
 
 % Creates the mealplan
-D = MealPlan(Days,1);
+D = MealPlan(Days,0);
 D = D';
 
 correctMeal = zeros(1,length(D));
@@ -502,12 +505,78 @@ hold off
 
 %% (13) Implement Euler-maruyama Method
 
+% This is done in the function called mvpNoise
 
+% Adds the MVP model that includes the noise measurement
+simModel = @mvpNoise;
+
+% Simulation method/function
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+
+% Creates the mealplan
+D = MealPlan(Days,0);
+D = D';
+
+correctMeal = zeros(1,length(D));
+correctSnack = zeros(1,length(D));
+for i=1:length(D)
+   if D(i)>4.5
+    correctMeal(i) = 300;
+   end
+   if D(i)<4.5 && D(i)>0
+      correctSnack(i) = 300;
+   end
+end
+
+        % -------------------Simulation-------------------
+[T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+
+% Blood glucose concentration
+Gsc = Y; % [mg/dL]
+
+         % -------------------Visualize-------------------
+% Create figure with absolute size for reproducibility
+figure(1);
+
+% Plot blood glucose concentration
+plot(T*min2h, Gsc);
+xlim([t0, tf]*min2h);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+title('Simulation 1 person - 31 days - 3 Meals/day')
+
+% -------------- Evaluation of simulation -------------------
+
+% Initialize critical range for glucose concentration in the blood    
+Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
+
+% Create the plot
+figure(2);
+[V] = ComputeProcent(Gsc, Gcrit);
+PlotProcent(V);
+
+dg=10;
+dt=10;
+t = T*min2h;
+[GF,dGF,GRID_snack]=GridAlgo(Gsc,dg,dt,12,t);
+x_snack=GRID_Filter(GRID_snack);
+
+MealCorrectness(D,x_snack,1)
+
+figure(3);
+plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal,'g-',t,correctSnack,'y-')
+xlim([t0, tf]*min2h);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+title('With Filter')
 
 
 %% (14) Sim 100 persons with Euler maruyama + stochastic diff term + grid algo
 
-% ????
+%  Mangler at lave (12)
+
 
 %% Test af dg og dt parameter i Grid algo parameter:
 
@@ -682,7 +751,11 @@ legend('Procent found within 1 hour','Average time taken to find meal')
 
 % alt i alt er det bedst når dg og dt er høje. 
 
+
 %% test af indre parameter i GRID
+
+% Adds the MVP model that includes the noise measurement
+simModel = @mvpNoise;
 
 % Creates the mealplan
 D = MealPlan(Days,0);
@@ -728,11 +801,6 @@ xlabel('Time [h]');
 title('Without Filter')
 
 MealCorrectness(D,x_snack,1)
-
-
-
-
-
 
 
 
