@@ -1,5 +1,5 @@
 %% Initialization 
-clear; clc;
+clear; clc; clear all;
 % Function that initializes the data, and loads the functions used.
 loadLib();
 
@@ -422,7 +422,7 @@ end
 hold off
 
 
-%% (7) Update the MVP model with a stochastic measurement noise model
+%% (7A) Measurement noise Simulation without snack
 
 % This is done in the function called mvpNoise
 
@@ -435,7 +435,7 @@ haltingiter = haltinghours*h2min/Ts;
 % Control algorithm
 ctrlAlgorithm = @pidControllerSupBolus;
 
-Noise = 2;
+Noise = 5;
 
 % Creates the mealplan
 D = MealPlan(Days,0);
@@ -459,8 +459,8 @@ Gsc = mvpOutput(X,Noise); % [mg/dL]
 
 % ------------------- GRID -------------------
 
-dg= 1;
-dt=1;
+dg= 10;
+dt=10;
 t = T*min2h;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
 x=GRID_Filter(GRID);
@@ -486,101 +486,42 @@ hold off
 
 subplot(212)
 plot(T*min2h, Gsc,'k-',T*min2h, x*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
+xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+legend('CGM','Predicted Meal','Actual Meal')
+title('Grid Algorithm on simulation')
 
 % -------------- Evaluation of simulation -------------------
 
 % Initialize critical range for glucose concentration in the blood    
 Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
 
-% Create the plot
 figure(3);
 [V] = ComputeProcent(Gsc, Gcrit);
 PlotProcent(V);
 
-
-%% (8) Simulate 100 persons over 1 month with added noise + Grid algo test
-
-simModel = @mvpNoise;
-dg=10;
-dt=1;
-
-GscAv = zeros(1,864);
-GridAv = zeros(1,864);
-
-parfor i=1:100
-    
-    p = CreatePerson();
-    [xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
-    
-    if(flag ~= 1), error ('fsolve did not converge!'); end
-    % Update the nominal basal rate
-    ctrlPar = [
-      5.0;    % [min]     Sampling time
-      0.05;   %           Proportional gain
-      0.0005; %           Integral gain
-      0.2500; %           Derivative gain
-    108.0;    % [mg/dL]   Target blood glucose concentration
-    NaN];
-    ctrlPar(6) = us(1);
-    x0 = xs;
-    
-    % Creates the mealplan
-    D = MealPlan(Days,0);
-    D = D';
-    
-    % -------------------Simulation-------------------
-    % Closed-loop simulation
-    [T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
-    simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
-
-    % Blood glucose concentration
-    Gsc = Y; % [mg/dL]
-    
-    GscAv = GscAv+Gsc;
-    
-    [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,T*min2h);
-    x=GRID_Filter(GRID);
-    
-    GridAv = GridAv+x;
-    
-    subplot(2,1,1)
-    plot(T*min2h, Gsc,'b-');
-    xlim([t0, tf]*min2h);
-    hold on
-    
-end
-
-GscAv = GscAv/100;
-
-[GF,dGF,GRID]=GridAlgo(GscAv,dg,dt,12,T*min2h);
-    x=GRID_Filter(GRID);
-
-plot(T*min2h,GscAv,'y-',T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
-xlim([t0, tf]*min2h);
-hold off
-
-subplot(2,1,2)
-plot(T*min2h,GscAv,'k-',T*min2h,x*200,'b-')
+MealCorrectness(D,x,1)
 
 
-%% (12) argument MVP with stochastic diffusion term
-
-% ?????
-
-
-%% (13) Implement Euler-maruyama Method
+%% (7B) Measurement noise Simulation with snack
 
 % This is done in the function called mvpNoise
 
-% Adds the MVP model that includes the noise measurement
-simModel = @mvpNoise;
+simModel = @mvpModel;
 
-% Simulation method/function
-simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+% Halting iterations used in PID controller
+haltinghours = 2;
+haltingiter = haltinghours*h2min/Ts;
+
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+Noise = 5;
 
 % Creates the mealplan
-D = MealPlan(Days,0);
+D = MealPlan(Days,1);
 D = D';
 
 correctMeal = zeros(1,length(D));
@@ -594,54 +535,426 @@ for i=1:length(D)
    end
 end
 
-        % -------------------Simulation-------------------
-[T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
+% Closed-loop simulation
+[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime, opts);
 
 % Blood glucose concentration
-Gsc = Y; % [mg/dL]
+Gsc = mvpOutput(X,Noise); % [mg/dL]
 
-         % -------------------Visualize-------------------
+% ------------------- GRID -------------------
+
+dg= 10;
+dt=10;
+t = T*min2h;
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
+
+% -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
-figure(4);
-
+figure(2);
+subplot(211);
+hold on
 % Plot blood glucose concentration
-plot(T*min2h, Gsc);
+for i = length(Gcrit):-1:1
+    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
+    hold on
+end
+plot(T*min2h, Gsc, 'Color',c(1,:)); 
+yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('Simulation 1 person - 31 days - 3 Meals/day')
+hold off
+
+subplot(212)
+plot(T*min2h, Gsc,'k-',T*min2h, x*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
+xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+legend('CGM','Predicted Meal','Actual Meal','Snack')
+title('Grid Algorithm on simulation')
 
 % -------------- Evaluation of simulation -------------------
 
 % Initialize critical range for glucose concentration in the blood    
 Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
 
-% Create the plot
-figure(5);
+figure(3);
 [V] = ComputeProcent(Gsc, Gcrit);
 PlotProcent(V);
 
+MealCorrectness(D,x,1)
+
+
+%% (8) Measurement noise simulation 100 Persons (no snack)  
+
+simModel = @mvpModel;
+% Halting iterations used in PID controller
+haltinghours = 2;
+haltingiter = haltinghours*h2min/Ts;
+
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+Noise = 5;
 dg=10;
 dt=10;
+
+T = 5:5:Days*24*60;
 t = T*min2h;
-[GF,dGF,GRID_snack]=GridAlgo(Gsc,dg,dt,12,t);
-x_snack=GRID_Filter(GRID_snack);
 
-MealCorrectness(D,x_snack,1)
+GscAv = zeros(1,864);
+GridAv = zeros(1,864);
 
-figure(6);
-plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal,'g-',t,correctSnack,'y-')
+figure(1);
+subplot(211);
+hold on
+for j = length(Gcrit):-1:1
+        area([t0, tf]*min2h,[Gcrit(j),Gcrit(j)],'FaceColor',Gcritcolors{j},'LineStyle','none')
+        hold on
+end
+
+parfor i=1:100
+    
+    %Creates new person
+    p = CreatePerson();
+    [xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
+    
+    % Control parameters
+    ctrlParComplete = [
+      5.0;    % [min]     Sampling time
+      0.05;   %           Proportional gain
+      0.00005; %           Integral gain
+      0.5; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];
+    
+    ctrlParComplete(6) = us(1);
+    x0 = xs;
+    
+    % Creates new mealplan
+    D = MealPlan(Days,0);
+    D = D';
+    
+    % -------------------Simulation-------------------
+    % Closed-loop simulation
+    [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime, opts);
+
+    % Blood glucose concentration
+    Gsc = mvpOutput(X,Noise); % [mg/dL]
+    
+    GscAv = GscAv+Gsc;
+    
+    [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,T*min2h);
+    x=GRID_Filter(GRID);
+    
+    GridAv = GridAv+x;
+    
+    % Plot blood glucose concentration
+    plot(T*min2h, Gsc, 'Color',c(1,:)); 
+    yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+    xlim([t0, tf]*min2h);
+    
+end
+GscAv = GscAv/100;
+
+[GF,dGF,GRID]=GridAlgo(GscAv,dg,dt,12,t);
+    x=GRID_Filter(GRID);
+yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+
+plot(t,GscAv,'y-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
 xlim([t0, tf]*min2h);
+ylim([0 400])
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
-title('With Filter')
+title('Simulation 100 people')
+hold off
+
+subplot(2,1,2)
+plot(t,GscAv,'k-',t,x*300,'r-')
+xlim([t0, tf]*min2h);
+ylim([min(GscAv)*0.8, max(GscAv)*1.1]);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+title('GRID on Average of 100 people')
 
 
-%% (14) Sim 100 persons with Euler maruyama + stochastic diff term + grid algo
+%% (13A) EulerMaruyama noise Simulation without snack
 
-%  Mangler at lave (12)
+% This is done in the function called mvpNoise
+
+simModel = @mvpNoise;
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+
+% Halting iterations used in PID controller
+haltinghours = 2;
+haltingiter = haltinghours*h2min/Ts;
+
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+Noise = 5;
+
+% Creates the mealplan
+D = MealPlan(Days,0);
+D = D';
+
+correctMeal = zeros(1,length(D));
+for i=1:length(D)
+   if D(i)>0
+    correctMeal(i) = 1;
+   end
+end
+
+% Closed-loop simulation
+[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime, opts);
+
+% Blood glucose concentration
+Gsc = mvpOutput(X,Noise); % [mg/dL]
+
+% ------------------- GRID -------------------
+
+dg= 10;
+dt=10;
+t = T*min2h;
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
+
+% -------------------Visualize-------------------
+% Create figure with absolute size for reproducibility
+figure(2);
+subplot(211);
+hold on
+% Plot blood glucose concentration
+for i = length(Gcrit):-1:1
+    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
+    hold on
+end
+plot(T*min2h, Gsc, 'Color',c(1,:)); 
+yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+title('Simulation 1 person - 31 days - 3 Meals/day')
+hold off
+
+subplot(212)
+plot(T*min2h, Gsc,'k-',T*min2h, x*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
+xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+legend('CGM','Predicted Meal','Actual Meal')
+title('Grid Algorithm on simulation')
+
+% -------------- Evaluation of simulation -------------------
+
+% Initialize critical range for glucose concentration in the blood    
+Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
+
+figure(3);
+[V] = ComputeProcent(Gsc, Gcrit);
+PlotProcent(V);
+
+MealCorrectness(D,x,1)
+
+
+%% (13B) EulerMaruyama noise Simulation with snack
+
+% This is done in the function called mvpNoise
+
+simModel = @mvpNoise;
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+
+% Halting iterations used in PID controller
+haltinghours = 2;
+haltingiter = haltinghours*h2min/Ts;
+
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+Noise = 5;
+
+% Creates the mealplan
+D = MealPlan(Days,1);
+D = D';
+
+correctMeal = zeros(1,length(D));
+correctSnack = zeros(1,length(D));
+for i=1:length(D)
+   if D(i)>4.5
+    correctMeal(i) = 300;
+   end
+   if D(i)<4.5 && D(i)>0
+      correctSnack(i) = 300;
+   end
+end
+
+% Closed-loop simulation
+[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime, opts);
+
+% Blood glucose concentration
+Gsc = mvpOutput(X,Noise); % [mg/dL]
+
+% ------------------- GRID -------------------
+
+dg= 10;
+dt=10;
+t = T*min2h;
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+x=GRID_Filter(GRID);
+
+% -------------------Visualize-------------------
+% Create figure with absolute size for reproducibility
+figure(2);
+subplot(211);
+hold on
+% Plot blood glucose concentration
+for i = length(Gcrit):-1:1
+    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
+    hold on
+end
+plot(T*min2h, Gsc, 'Color',c(1,:)); 
+yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+title('Simulation 1 person - 31 days - 3 Meals/day')
+hold off
+
+subplot(212)
+plot(T*min2h, Gsc,'k-',T*min2h, x*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
+xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+legend('CGM','Predicted Meal','Actual Meal','Snack')
+title('Grid Algorithm on simulation')
+
+% -------------- Evaluation of simulation -------------------
+
+% Initialize critical range for glucose concentration in the blood    
+Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
+
+figure(3);
+[V] = ComputeProcent(Gsc, Gcrit);
+PlotProcent(V);
+
+MealCorrectness(D,x,1)
+
+
+%% (14) EulerMaruyama noise simulation 100 Persons (no snack)  
+
+simModel = @mvpNoise;
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+% Halting iterations used in PID controller
+haltinghours = 2;
+haltingiter = haltinghours*h2min/Ts;
+
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+Noise = 5;
+dg=10;
+dt=10;
+
+T = 5:5:Days*24*60;
+t = T*min2h;
+
+GscAv = zeros(1,864);
+GridAv = zeros(1,864);
+
+figure(1);
+subplot(211);
+hold on
+for j = length(Gcrit):-1:1
+        area([t0, tf]*min2h,[Gcrit(j),Gcrit(j)],'FaceColor',Gcritcolors{j},'LineStyle','none')
+        hold on
+end
+
+parfor i=1:100
+    
+    %Creates new person
+    p = CreatePerson();
+    [xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
+    
+    % Control parameters
+    ctrlParComplete = [
+      5.0;    % [min]     Sampling time
+      0.05;   %           Proportional gain
+      0.00005; %           Integral gain
+      0.5; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];
+    
+    ctrlParComplete(6) = us(1);
+    x0 = xs;
+    
+    % Creates new mealplan
+    D = MealPlan(Days,0);
+    D = D';
+    
+    % -------------------Simulation-------------------
+    % Closed-loop simulation
+    [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime, opts);
+
+    % Blood glucose concentration
+    Gsc = mvpOutput(X,Noise); % [mg/dL]
+    
+    GscAv = GscAv+Gsc;
+    
+    [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,T*min2h);
+    x=GRID_Filter(GRID);
+    
+    GridAv = GridAv+x;
+    
+    % Plot blood glucose concentration
+    plot(T*min2h, Gsc, 'Color',c(1,:)); 
+    yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+    xlim([t0, tf]*min2h);
+    
+end
+GscAv = GscAv/100;
+
+[GF,dGF,GRID]=GridAlgo(GscAv,dg,dt,12,t);
+    x=GRID_Filter(GRID);
+yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+
+plot(t,GscAv,'y-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
+xlim([t0, tf]*min2h);
+ylim([0 400])
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+title('Simulation 100 people')
+hold off
+
+subplot(2,1,2)
+plot(t,GscAv,'k-',t,x*300,'r-')
+xlim([t0, tf]*min2h);
+ylim([min(GscAv)*0.8, max(GscAv)*1.1]);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+title('GRID on Average of 100 people')
 
 
 %% Test af dg og dt parameter i Grid algo parameter:

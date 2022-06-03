@@ -1,4 +1,4 @@
-function [P Av] = MealCorrectness(D,x,t)
+function MealCorrectness(D,x,t)
 %MEALCORRECTNESS is a function that computes how well the GRID algorithm
 %has found meals based on the glucose concetration.
 
@@ -16,8 +16,8 @@ b = nnz(x); % finds number of predicted meals
 
 X = sprintf('Number of meals:         %d',a);
 Y = sprintf('Number of found meals:   %d',b);
-%disp(X)
-%disp(Y)
+disp(X)
+disp(Y)
 
 
 count = 0;
@@ -38,9 +38,9 @@ for i=1:length(x)
 end
 
 P = round(count/b*100,2);
-%fprintf('Meals found within %d hour: %d \n' ,t,count);
+fprintf('Meals found within %d hour: %d \n' ,t,count);
 X = sprintf('Procent:  %g\n',P);
-%disp(X)
+disp(X)
 
 
 counts = zeros(1,b);
@@ -66,7 +66,7 @@ end
 Av = round((sum(counts)/b)*5,2);
 
 X = sprintf('Average time to detect meal: %g min\n',Av);
-%disp(X)
+disp(X)
 
 
 
