@@ -137,6 +137,8 @@ for k = 1:N
         Dtemp = zeros(1,length(D));
         Dtemp(1) = D(k);
         
+        % Uopenbolus = repmat([ctrlPar(6);0], 1, length(D));
+        
         [ubok, flag] = computeOptimalBolus(ubo0, idxbo, xk, tspanbolus, Ubolus, Dtemp, p, ...
         scalingFactor, objectiveFunction, simModel, outputModel, simMethod, opts);
         
