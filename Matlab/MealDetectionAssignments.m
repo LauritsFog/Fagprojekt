@@ -3,8 +3,11 @@ clear; clc;
 % Function that initializes the data, and loads the functions used.
 loadLib();
 
-Days = 7;
+Days = 3;
 InitData();
+
+% 3 mmol/dl er nedre grænse
+% vi vil gerne ligge mellem 3.9 og 10
 
 
 %% List of functions and scripts used in the assignments
@@ -433,7 +436,7 @@ Gsc = Y; % [mg/dL]
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
-figure(1);
+figure(2);
 
 % Plot blood glucose concentration
 plot(T*min2h, Gsc);
@@ -448,7 +451,7 @@ title('Simulation 1 person - 31 days - 3 Meals/day')
 Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
 
 % Create the plot
-figure(2);
+figure(3);
 [V] = ComputeProcent(Gsc, Gcrit);
 PlotProcent(V);
 
@@ -456,8 +459,13 @@ PlotProcent(V);
 %% (8) Simulate 100 persons over 1 month with added noise + Grid algo test
 
 simModel = @mvpNoise;
+dg=10;
+dt=1;
 
-parfor i=1:100
+GscAv = zeros(1,864);
+GridAv = zeros(1,864);
+
+parfor i=1:1000
     
     p = CreatePerson();
     [xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
@@ -482,20 +490,36 @@ parfor i=1:100
     % Closed-loop simulation
     [T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, haltingiter, idxbo, simPID, rampingfunction, opts);
+    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
 
     % Blood glucose concentration
     Gsc = Y; % [mg/dL]
     
-    [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+    GscAv = GscAv+Gsc;
+    
+    [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,T*min2h);
     x=GRID_Filter(GRID);
     
-    plot(T*min2h, Gsc,'b-',t,x*350,'r-');
+    GridAv = GridAv+x;
+    
+    subplot(2,1,1)
+    plot(T*min2h, Gsc,'b-');
     xlim([t0, tf]*min2h);
     hold on
     
 end
+
+GscAv = GscAv/100;
+
+[GF,dGF,GRID]=GridAlgo(GscAv,dg,dt,12,T*min2h);
+    x=GRID_Filter(GRID);
+
+plot(T*min2h,GscAv,'y-',T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
+xlim([t0, tf]*min2h);
 hold off
+
+subplot(2,1,2)
+plot(T*min2h,GscAv,'k-',T*min2h,x*200,'b-')
 
 
 %% (12) argument MVP with stochastic diffusion term
@@ -538,7 +562,7 @@ Gsc = Y; % [mg/dL]
 
          % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
-figure(1);
+figure(4);
 
 % Plot blood glucose concentration
 plot(T*min2h, Gsc);
@@ -553,7 +577,7 @@ title('Simulation 1 person - 31 days - 3 Meals/day')
 Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
 
 % Create the plot
-figure(2);
+figure(5);
 [V] = ComputeProcent(Gsc, Gcrit);
 PlotProcent(V);
 
@@ -565,7 +589,7 @@ x_snack=GRID_Filter(GRID_snack);
 
 MealCorrectness(D,x_snack,1)
 
-figure(3);
+figure(6);
 plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal,'g-',t,correctSnack,'y-')
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
@@ -786,6 +810,7 @@ t = T*min2h;
 [GF,dGF,GRID_snack]=GridAlgo(Gsc,dg,dt,12,t);
 x_snack=GRID_Filter(GRID_snack);
 
+figure(3);
 subplot(2,1,1)
 plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal,'g-',t,correctSnack,'y-')
 xlim([t0, tf]*min2h);

@@ -51,4 +51,4 @@ function G = mvpOutput(X, p) %#ok
 % John Bagterp Jørgensen
 
 % Glucose subsystem
-G = X(6, :); % [mg/dL] Blood glucose concentration
+G = X(7, :); % [mg/dL] Blood glucose concentration
