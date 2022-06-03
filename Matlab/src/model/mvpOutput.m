@@ -1,4 +1,4 @@
-function G = mvpOutput(X, p) %#ok
+function [G] = mvpOutput(X,b) 
 % MVPOUTPUT Evaluate the output, i.e., the blood glucose concentration for
 % the Medtronic Virtual Patient (MVP) model.
 %
