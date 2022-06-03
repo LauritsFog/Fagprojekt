@@ -25,7 +25,7 @@ function G = mvpOutput(X, p) %#ok
 %          generateMVPParameters
 %          mvpModelSteadyStateWrapper
 %          computeSteadyStateMVPModel
-% 
+%
 % REFERENCES
 % [1] Kanderian, S. S., Weinzimer, S., Voskanyan, G., and Steil, G. M.
 % (2009). Identification of intraday metabolic profiles during closed-loop
@@ -38,13 +38,13 @@ function G = mvpOutput(X, p) %#ok
 % Svensson, J., Ranjan, A. G., Nørgaard, K. Jørgensen, J. B., 2022.
 % Nonlinear Model Predictive Control and System Identification for a Dual-
 % hormone Artificial Pancreas. In submission. arXiv: 2202.13938.
-% 
+%
 % CONTACT INFORMATION
 %  info@diamatica.com
 %  tobk@dtu.dk
 % athre@dtu.dk
 %  jbjo@dtu.dk
-% 
+%
 % AUTHORS
 % Tobias K. S. Ritschel
 % Asbjørn Thode Reenberg

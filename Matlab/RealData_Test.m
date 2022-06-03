@@ -17,7 +17,7 @@ Gsc = Gsc(1:Days*288);
 T = 1:Days*288;
 t = T*min2h;
 
-figure(1);
+figure(4);
 plot(t,Gsc)
 xlim([0 t(end)]);
 
@@ -29,7 +29,7 @@ dt=10;
 [GF,dGF,GRID_snack]=GridAlgo(Gsc,dg,dt,12,t);
 x_snack=GRID_Filter(GRID_snack);
 
-figure(1);
+figure(4);
 plot(t, Gsc,'b-',t,x_snack*350,'r-')
 xlim([0 t(end)]);
 ylabel({'CGM measurements', '[mg/dL]'});
