@@ -412,8 +412,15 @@ hold off
 
 % This is done in the function called mvpNoise
 
+simModel = @mvpModel;
+
+%{
 % Adds the MVP model that includes the noise measurement
 simModel = @mvpNoise;
+
+% Simulation method/function
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+%}
 
 % Creates the mealplan
 D = MealPlan(Days,0);
@@ -432,7 +439,7 @@ end
     ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
 
 % Blood glucose concentration
-Gsc = Y; % [mg/dL]
+Gsc = mvpOutput(X,1);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
@@ -444,6 +451,7 @@ xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('Simulation 1 person - 31 days - 3 Meals/day')
+
 
 % -------------- Evaluation of simulation -------------------
 
@@ -465,7 +473,7 @@ dt=1;
 GscAv = zeros(1,864);
 GridAv = zeros(1,864);
 
-parfor i=1:1000
+parfor i=1:100
     
     p = CreatePerson();
     [xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
@@ -779,7 +787,7 @@ legend('Procent found within 1 hour','Average time taken to find meal')
 %% test af indre parameter i GRID
 
 % Adds the MVP model that includes the noise measurement
-simModel = @mvpNoise;
+simModel = @mvpModel;
 
 % Creates the mealplan
 D = MealPlan(Days,0);
@@ -802,7 +810,7 @@ end
     ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
 
 % Blood glucose concentration
-Gsc = Y; % [mg/dL]
+Gsc = mvpOutput(X,5);
 
 dg=10;
 dt=10;

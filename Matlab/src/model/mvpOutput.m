@@ -1,4 +1,4 @@
-function G = mvpOutput(X, p) %#ok
+function [G] = mvpOutput(X,b) 
 % MVPOUTPUT Evaluate the output, i.e., the blood glucose concentration for
 % the Medtronic Virtual Patient (MVP) model.
 %
@@ -51,5 +51,11 @@ function G = mvpOutput(X, p) %#ok
 % John Bagterp Jørgensen
 
 % Glucose subsystem
-b = 0;
-G = X(7, :) + b*randn; % [mg/dL] Blood glucose concentration
+
+G = X(7,:)+b*randn(1,length(X(7,:)));% [mg/dL] Blood glucose concentration
+
+
+
+
+
+
