@@ -1,4 +1,4 @@
-function [M,MealEst]=MealSize(Gm,t)
+function [M,MealEst,dGF,ddGF]=MealSize(Gm,t)
 %% Best values for parameters
 tauF=6;%minuttes
 dG=10;
@@ -46,35 +46,49 @@ end
 %%%%%%%%% Authors: Hyunjin Lee, Bruce A. Buckingham, Darrell M. Wilson, and B. Wayne Bequette
 M=zeros(1,k);
 for j=7:k
+    bool1=false;bool2=false;bool3=false;bool4=false;
+
     for i =1:6
         %Checking for all "i" if the criterias are meet. If so it sets one
         %of the bools to true-
-        bool1=false;bool2=false;bool3=false;bool4=false;
         if dGF(j-i)<0&& dGF(j-i+1)>0&& ddGF(j-i)<0&& ddGF(j-i+1)>0
             bool1=true;
             break;
-        elseif i<=5&& dGF(j-i)<0.5&& dGF(j-i+1)>0.5&& ddGF(j-i)<0.005&& ddGF(j-i+1)>0.005
-            bool2=true;
-            break;
-        elseif i<=5&& dGF(j-i)<1.25&& dGF(j-i+1)>1.25&& ddGF(j-i)<0.0125&& ddGF(j-i+1)>0.0125
-            bool3=true;
-            break;
-        elseif i<=4&& dGF(j-i)<1.8&& dGF(j-i+1)>1.8&& ddGF(j-i)<0.018&& ddGF(j-i+1)>0.018
-            bool4=true;
-            break;
-        else
-          %  bool1=false;bool2=false;bool3=false;bool4=false;
         end
     end
-    
+    for i =1:5
+        %Checking for all "i" if the criterias are meet. If so it sets one
+        %of the bools to true-
+        if dGF(j-i)<0.5&& dGF(j-i+1)>0.5&& ddGF(j-i)<0.05&& ddGF(j-i+1)>0.005
+            bool2=true;
+            break;
+        end
+    end
+    for i =1:5
+        %Checking for all "i" if the criterias are meet. If so it sets one
+        %of the bools to true-
+        if i<=5&& dGF(j-i)<1.25&& dGF(j-i+1)>1.25&& ddGF(j-i)<0.0125&& ddGF(j-i+1)>0.0125
+            bool3=true;
+            break;
+        end
+    end
+    for i =1:4
+        %Checking for all "i" if the criterias are meet. If so it sets one
+        %of the bools to true-
+        if dGF(j-i)<1.8&& dGF(j-i+1)>1.8&& ddGF(j-i)<0.018&& ddGF(j-i+1)>0.018
+            bool4=true;
+            break;
+        end
+    end
+  
     %Constraints in step one and assigning the relevant value to entry j in M
-    if bool1&& GF(j)>100&&dGF(j-1)<dGF(j)
+    if bool1&& GF(j)>100&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
         M(j)=1;
-    elseif bool2&& GF(j)>100&&dGF(j-1)<dGF(j)
+    elseif bool2&& GF(j)>100&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
         M(j)=1.5;
-    elseif bool3&& GF(j)>125&&dGF(j-1)<dGF(j)
+    elseif bool3&& GF(j)>125&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
         M(j)=2.25;
-    elseif bool4&&GF(j)>120&&dGF(j-1)<dGF(j)
+    elseif bool4&&GF(j)>120&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
         M(j)=1.5;
     else
         M(j)=0;
@@ -159,7 +173,7 @@ for i=7:k
 end
 
 
-%% intermediate step
+% intermediate step
 for i=7:k
     if i-6<=0
         c=1;
@@ -173,7 +187,7 @@ for i=7:k
     
 end
 
-MealEst=4*M;
+MealEst=(4*M)*5;%For 5 minuttes
 
 
 

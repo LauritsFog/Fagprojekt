@@ -59,25 +59,50 @@ plot(testmeal)
 Days=2;
 InitData();
 
-
+%%
+close all;
 [TSupBolusPIDsim, XSupBolusPIDsim, YSupBolusPIDsim, USupBolusPIDsim] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
     ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
-%%
+
 % Blood glucose concentration
 GscSupBolusPIDsim = mvpOutput(XSupBolusPIDsim,4);
 %GscSupBolusPIDsim = YSupBolusPIDsim; % [mg/dL]
 %plot(GscSupBolusPIDsim)
 
-[testmealNoice, mealestNoice]=MealSize(GscSupBolusPIDsim,tspan);
+[testmealNoice, mealestNoice,dGF,ddGF]=MealSize(GscSupBolusPIDsim,tspan);
 
 figure(2)
 hold on
 yyaxis right
 plot(GscSupBolusPIDsim)
 yyaxis left
-plot(testmealNoice)
+plot(mealestNoice)
 hold off
 
+y=[GscSupBolusPIDsim;dGF;ddGF;mealestNoice];
 
+
+%% Debug plot
+tiledlayout(3,1)
+% First plot
+ax1 = nexttile;
+yyaxis right
+plot(GscSupBolusPIDsim)
+yyaxis left
+plot(mealestNoice)
+title('GF')
+
+% Second plot
+ax2 = nexttile;
+plot(dGF,'b')
+title('dGF')
+
+% Third plot
+ax3 = nexttile;
+plot(ddGF,'g')
+title('ddGF')
+linkaxes([ax1 ax2 ax3],'x')
+
+y=[GscSupBolusPIDsim;dGF;ddGF];
 
