@@ -10,12 +10,12 @@ function [GF,dGF,GRID,ddGF]=GridAlgo(Gm,dG,dt,~,t)
 %% Output
 %[Vector] GRID with length k either 0 or 1 at the i'th entry.
 %% Best values for parameters
-tauF=10;%minuttes
+tauF=6;%minuttes
 % den var 6 før 
-Gmin=120;%mg/dL 
+Gmin=130;%mg/dL 
 % Var før 130 
 
-Gmin3=1.4 ;%mg/dL/min
+Gmin3=1.5 ;%mg/dL/min
 % den var 1.5 før
 
 Gmin2=1.6;%mg/dL/min
@@ -63,7 +63,5 @@ for i=3:k
         GRID(i)=0;
     end
 end
-
-
 
 end
