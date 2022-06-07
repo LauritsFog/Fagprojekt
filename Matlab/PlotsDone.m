@@ -40,7 +40,8 @@ end
 % 3 mmol/dl er nedre grænse
 % vi vil gerne ligge mellem 3.9 og 10
 
-%_______________ Measurement noise Simulation without snack
+
+%% Measurement noise Simulation without snack
 
 % This is done in the function called mvpNoise
 
@@ -119,7 +120,7 @@ fprintf('---------- Measurement noise - No snack -------------- \n \n')
 MealCorrectness(D,x,1)
 
 
-% _____________Measurement noise Simulation with snack
+%% Measurement noise Simulation with snack
 
 % This is done in the function called mvpNoise
 
@@ -196,7 +197,8 @@ title('Preformance (measurement noise - snack)')
 fprintf('---------- Measurement noise - With snack -------------- \n \n')
 MealCorrectness(D,x,1)
 
-% ________________EulerMaruyama noise Simulation without snack
+
+%% EulerMaruyama noise Simulation without snack
 
 % This is done in the function called mvpNoise
 
@@ -275,7 +277,7 @@ fprintf('---------- Eulermaruyama - No snack -------------- \n \n')
 MealCorrectness(D,x,1)
 
 
-% EulerMaruyama noise Simulation with snack
+%% EulerMaruyama noise Simulation with snack
 
 % This is done in the function called mvpNoise
 
@@ -447,6 +449,7 @@ ylim([min(GscAv)*0.8, max(GscAv)*1.1]);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('GRID on Average of 100 people')
+
 
 %% EulerMaruyama noise simulation 100 Persons (no snack)  
 
