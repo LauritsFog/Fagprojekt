@@ -50,5 +50,11 @@ function [G] = mvpOutput(X,b)
 % Asbjørn Thode Reenberg
 % John Bagterp Jørgensen
 
+if ~exist('b','var')
+     % third parameter does not exist, so default it to something
+      b = 1;
+ end
+
+
 % Glucose subsystem
 G = X(7, :) + b*randn(1,length(X(7, :))); % [mg/dL] Blood glucose concentration
