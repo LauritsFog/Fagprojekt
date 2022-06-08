@@ -459,7 +459,7 @@ Gsc = mvpOutput(X,Noise); % [mg/dL]
 
 % ------------------- GRID -------------------
 
-dg= 10;
+dg= 3;
 dt=10;
 t = T*min2h;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
@@ -1131,56 +1131,52 @@ legend('Procent found within 1 hour','Average time taken to find meal')
 % alt i alt er det bedst når dg og dt er høje. 
 
 
-%% test af indre parameter i GRID
+%% test GRID Algo
 
-% Adds the MVP model that includes the noise measurement
-simModel = @mvpModel;
+% This is done in the function called mvpNoise
 
-% Creates the mealplan
-D = MealPlan(Days,0);
-D = D';
+simModel = @mvpNoise;
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
-correctMeal = zeros(1,length(D));
-correctSnack = zeros(1,length(D));
-for i=1:length(D)
-   if D(i)>4.5
-    correctMeal(i) = 300;
-   end
-   if D(i)<4.5 && D(i)>0
-      correctSnack(i) = 300;
-   end
-end
+% Halting iterations used in PID controller
+haltinghours = 2;
+haltingiter = haltinghours*h2min/Ts;
 
-        % -------------------Simulation-------------------
-[T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, D, p, ...
+% Control algorithm
+ctrlAlgorithm = @pidControllerSupBolus;
+
+% Closed-loop simulation
+[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime, opts);
 
 % Blood glucose concentration
-Gsc = mvpOutput(X,5);
+Gsc = mvpOutput(X,Noise); % [mg/dL]
 
-dg=10;
-dt=10;
+
+dg=3;
+dt=1;
 t = T*min2h;
 [GF,dGF,GRID_snack]=GridAlgo(Gsc,dg,dt,12,t);
 x_snack=GRID_Filter(GRID_snack);
 
-figure(3);
+figure(1);
 subplot(2,1,1)
-plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal,'g-',t,correctSnack,'y-')
+plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal,'g-') %,t,correctSnack,'y-')
+yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('With Filter')
 
 subplot(2,1,2)
-plot(T*min2h, Gsc,'b-',t,GRID_snack*300,'r-',t,correctMeal,'g-',t,correctSnack,'y-')
+plot(T*min2h, Gsc,'b-',t,GRID_snack*300,'r-',t,correctMeal,'g-') %,t,correctSnack,'y-')
+yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('Without Filter')
-
-MealCorrectness(D,x_snack,1)
 
 
 

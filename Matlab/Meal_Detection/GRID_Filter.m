@@ -11,11 +11,15 @@ function x=GRID_Filter(GRID)
 %x the filtered binary vector
 %%
 %The filter
-B=[0,0,0,0,0,0,0,0,0,0,1,1,1];
+B=[0,1,1,1,1,1,1,1,1];
+% Måske ikke det bedste filter, men det fanger sort set alle de store
+% måltider
+
 %
 locationsOfMeal=strfind(GRID,B);
 x=zeros(1,length(GRID));
 % Adding 10 to get the position of the first 1. 
 %(Just the number of 0 in the B vector before the first 1)
-x([locationsOfMeal]+10)=1;
+x([locationsOfMeal])=1;
+% fjernet +10
 end

@@ -14,40 +14,41 @@ function MealCorrectness(D,x,t)
 a = nnz(D); % Finds number of meals in the mealplan
 b = nnz(x); % finds number of predicted meals
 
+% displays found numbers
 X = sprintf('Number of meals:         %d',a);
 Y = sprintf('Number of found meals:   %d',b);
 disp(X)
 disp(Y)
 
 
+% --------- Number of meals found within t hours  ------------
 count = 0;
-
 steps = t*12;
 
 for i=1:length(x)
-    if(D(i) > 0)    % tjek når der er et måltid
+    if(D(i) > 0)    % checks if there is a meal
         
-        for j=0:steps  % gå 1 time frem
+        for j=0:steps  % iterativly goes t hours ahead and checks if there is a predicted meal
             
-            if(x(i+j)>0) % tjek for hvert step om der er et predicted måltid
-               count = count+1;  % Hvis der er opdater
+            if(x(i+j)>0) 
+               count = count+1;  % If there is a predicted meal update the count
             end      
         end
         
     end    
 end
 
+% display number of meals within t hours
 P = round(count/b*100,2);
 fprintf('Meals found within %d hour: %d \n' ,t,count);
 X = sprintf('Procent:  %g\n',P);
 disp(X)
 
-
+% --------- Average time it take to find meal  ------------
 counts = zeros(1,b);
-
 id = 0;
 for i=1:length(x)
-    if(D(i) > 0) % tjek når der er et måltid
+    if(D(i) > 0) %  checks if there is a meal
         id = id+1;
         j = 0; 
         while(x(i+j) == 0)
@@ -64,7 +65,6 @@ for i=1:length(x)
 end
 
 Av = round((sum(counts)/b)*5,2);
-
 X = sprintf('Average time to detect meal: %g min\n',Av);
 disp(X)
 
