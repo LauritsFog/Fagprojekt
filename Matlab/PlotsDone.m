@@ -4,7 +4,7 @@ clear; clear all;
 loadLib();
 clc;
 
-Days = 3;
+Days = 31;
 InitData();
 
 % Noise Level
