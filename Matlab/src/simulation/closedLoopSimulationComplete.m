@@ -113,6 +113,21 @@ GRID = zeros(1,gridTime);
 
 Dest = zeros(1,length(tspan));
 
+% Insuling to carbohydrate ratio
+ICR = 1/2;
+
+% If 1 meal size estimation is used, otherwise grid algo is used
+mealMethod = 0;
+
+% Minimim meal sizes allowed
+minMeal = 0.3;
+
+% tpause scalar
+alpha = 1;
+
+% bolus scalar
+beta = 0.7;
+
 for k = 1:N
     % Times
     tkp1 = tspan(k+1);
@@ -124,28 +139,56 @@ for k = 1:N
     dk = D(:, k);
     
     % Detecting meals
-    if k > gridTime
-        [G,dG,GRID]=GridAlgo(Y(k-gridTime:k),dg,dt,[],tspan(k-gridTime:k));
-    end
-    
-    % If meal is detected and no meal has been detected for in past
-    % gridTime
-    if k > gridTime && nnz(GRID) > 0 && nnz(Dest(k-gridTime:k)) == 0
-        dkest = 20;
-    else
-        dkest = 0;
-    end
-    
-    Dest(k) = dkest;
-    
-    % If meal is detected, halt integration for some iterations and compute
-    % optimal bolus
-    if dkest ~= 0
-        tpause = haltingiter;
+    if mealMethod == 0 % Using grid algo
+        if k > gridTime
+            [~,dGF,GRID]=GridAlgo(Y(k-gridTime:k),dg,dt,[],tspan(k-gridTime:k));
+        end
+
+        % If meal is detected and no meal has been detected for in past
+        % gridTime
+        if k > gridTime && nnz(GRID) > 0 && nnz(Dest(k-gridTime:k)) == 0
+            dkest = 1;
+        else
+            dkest = 0;
+        end
+
+        Dest(k) = dkest;
+
+        % If meal is detected, halt integration for some iterations and compute
+        % optimal bolus
+        if dkest ~= 0
+            % tpause = round(alpha*haltingiter*(1+mean(dGF(end-6:end))));
+            tpause = haltingiter;
+            
+            ubok = beta*uk(1)*haltingiter*(1+mean(dGF(end-6:end)));
+            % ubok = uk(1)*haltingiter;
+        else
+            ubok = 0;
+        end
         
-        ubok = uk(1)*haltingiter;
-    else
-        ubok = 0;
+        if yk < ctrlPar(5)
+            ubok = 0;
+        end
+    else % Using meal estimation
+        if k > gridTime
+            [~,MealEst,~,~] = MealSize(Y(k-gridTime:k),tspan(k-gridTime:k));
+            
+            if sum(MealEst) > minMeal
+                dkest = sum(MealEst);
+            else
+                dkest = 0;
+            end
+        else
+            dkest = 0;
+        end
+        
+        Dest(k) = dkest;
+        
+        if dkest ~= 0 && tpause == 0
+            tpause = haltingiter;
+        end
+        
+        ubok = ICR*dkest;
     end
     
     % Decrement tpause until 0

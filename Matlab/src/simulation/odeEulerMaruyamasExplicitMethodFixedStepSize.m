@@ -88,8 +88,6 @@ for k = 1:N
     % Time step size
     dtk = tkp1 - tk;
     
-    
-    
     % Evaluate the right-hand side function
     [fk, gk] = feval(fun, tk, xk, varargin{:});
     

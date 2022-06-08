@@ -93,7 +93,7 @@ objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 ctrlPar(6) = us(1);
 
 % Initial and final time
-days = 2;
+days = 3;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -138,9 +138,11 @@ scalingFactor = 1e-2;
 idxbo = 2;
 
 % Initial guess of the optimal insulin bolus
-ubo0 = 0; % [mU/min]
+ubo0 = 1e+3; % [mU/min]
 
 %% Simulate open loop with optimal bolus
+
+clc;
 
 tzero = 0;
 haltingiter = 0;

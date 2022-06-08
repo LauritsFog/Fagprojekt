@@ -77,9 +77,6 @@ Gs = 108; % [mg/dL]
 % If fsolve did not converge, throw an error
 if(flag ~= 1), error ('fsolve did not converge!'); end
 
-% Objective function
-objectiveFunction = @asymmetricQuadraticPenaltyFunction;
-
 % Initial and final time
 t0 =  0;       % min
 tf = 48*h2min; % min
@@ -99,20 +96,8 @@ tspan = Ts*(0:N);
 % Initial condition
 x0 = xs;
 
-% Manipulated inputs
-Uopen = repmat(us, 1, N);
-
-% Disturbance variables
-D = zeros(1, N);
-
 % Disturbance variables with multiple meals
 Dmealplan = MealPlan(2,false)';
-
-% Meal and meal bolus after 1 hour
-tMeal           = 1*h2min;        % [min]
-idxMeal         = tMeal/Ts + 1;   % [#]
-D(1, idxMeal)   = 90   /Ts;       % [g CHO/min]
-Uopen(2, idxMeal)   = 0;       % [mU/min]
 
 % Select which D to use
 Duse = Dmealplan;
@@ -123,18 +108,15 @@ scalingFactor = 1e-2;
 % Index of the insulin bolus in the vector of manipulated inputs
 idxbo = 2;
 
-% Initial guess of the optimal insulin bolus
-ubo0 = 0; % [mU/min]
-
 % Halting iterations used in PID controller
-haltinghours = 2;
+haltinghours = 3;
 haltingiter = haltinghours*h2min/Ts;
 
 % Ramping function
 rampingfunction = @sigmoidRamp;
 
 % Parameters for grid algorithm
-dg = 1;
+dg = 10;
 dt = 1;
 gridTime = 3*h2min/Ts;
 
@@ -144,20 +126,20 @@ tzero = (0.5*h2min)/Ts;
 %% Setting parameters
 
 % Control algorithm
-ctrlAlgorithm = @pidController;
+ctrlAlgorithm = @pidControllerSupBolus;
 
 penalties = nan(5,5,5);
 
 % Computing super bolus without PID simulation
-simPID = 1;
+simPID = 0;
 
 % 0.05;   %           Proportional gain
 % 0.0005; %           Integral gain
 % 0.2500; %           Derivative gain
 
-KPs = linspace(0, 0.5, 8);
-KIs = linspace(0.00001, 0.001, 8);
-KDs = linspace(0.0001, 20, 8);
+KPs = linspace(0, 0.05, 8);
+KIs = linspace(0, 0.0005, 8);
+KDs = linspace(0, 0.5, 8);
 
 %% Simulating
 
@@ -193,7 +175,7 @@ end
 
 %% Plotting
 
-% penalties = log(penalties);
+penalties = log(penalties);
 penaltiesScaled = rescale(penalties,0,255);
 
 figure;
