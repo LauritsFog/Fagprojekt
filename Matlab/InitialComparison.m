@@ -60,13 +60,23 @@ simMethod = @odeEulersExplicitMethodFixedStepSize;
 % simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 % Controller parameters and state
+% ctrlPar = [
+%       5.0;    % [min]     Sampling time
+%       0.05;   %           Proportional gain
+%       0.0005; %           Integral gain
+%       0.2500; %           Derivative gain
+%     108.0;    % [mg/dL]   Target blood glucose concentration
+%     NaN];     % [mU/min]  Nominal basal rate (overwritten below)
+
+% Controller parameters and state
 ctrlPar = [
       5.0;    % [min]     Sampling time
-      0.05;   %           Proportional gain
-      0.0005; %           Integral gain
-      0.2500; %           Derivative gain
+      0.15;   %           Proportional gain
+      0.0003; %           Integral gain
+      0.5; %           Derivative gain
     108.0;    % [mg/dL]   Target blood glucose concentration
     NaN];     % [mU/min]  Nominal basal rate (overwritten below)
+
 ctrlState = [
       0.0;  %          Initial value of integral
     108.0]; % [mg/dL] Last measurements (dummy value)

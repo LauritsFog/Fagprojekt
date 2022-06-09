@@ -1,7 +1,7 @@
                             %% Part 1
                 % Modeling, Simulation and Control
 clc;
-loadLibrary();
+loadLib();
 
 %% Problem 1
 
@@ -11,53 +11,81 @@ loadLibrary();
 % y(t) = measured glucose concentration [mg/dL]
 % z(t) = blood glucose concentration [mg/dL]
 
+% Conversion factors
+h2min = 60;      % Convert from h   to min
+min2h = 1/h2min; % Convert from min to h
+U2mU  = 1e3;     % Convert from U   to mU
+mU2U  = 1/U2mU;  % Convert from mU  to U
+
 % Parameter
 parm = [49 47 20.1 0.0106 0.0081 0.0022 1.33 253 47 5]';
 
 % State vector
 x0 = zeros(7,1);
 
-N=50000;
+% Initial and final time
+t0 =  0;       % min
+tf = 17*h2min; % min
+
+% Sampling time
+Ts = 5; % min
+
+% Number of control/sampling intervals
+N = (tf - t0)/Ts; % [#]
 
 % Font size
 fs = 14;
 
-% Time span
-tspan=[0 50000];
+% Sampling time
+Ts = 5; % min
 
 % Insulin injection rate
-u=25.04;
+u=[25.04;0];
 
 %Person is fasting
 d=0;
 
+% Time span
+tspan=[0 Ts*N];
+
 % Solve state vector using ode15
 
-[T,X] = ode15s(@MVPmodel,tspan,x0,[],u,d,parm);
-
-% Blood glucose concentration is; 
-z = X(:,4);
+[T,X] = ode15s(@mvpModel,tspan,x0,[],u,d,parm);
 
 % Measured blood glucose concentration is;
-y = X(:,5);
+y = X(:,7);
 
-% time inteval
-Th = T/60;
+% Time span
+tspan = Ts*(0:N);
+
+% Manipulated inputs
+U = repmat(u, 1, N);
+
+% Disturbance variables
+D = zeros(1, N);
+
+% Number of time steps in each control/sampling interval
+opts.Nk = 10;
+
+% Simulate
+[TEuler, XEuler] = openLoopSimulation(x0, tspan, U, D, parm, @mvpModel, @odeEulersExplicitMethodFixedStepSize, opts);
+
+% Measured blood glucose concentration is;
+yEuler = XEuler(7,:);
 
 % Plot af både z og y
-hold on 
-    plot(Th(1:75),z(1:75),"linewidth",3)
-    xlabel("t [h]","fontsize",fs);
-    ylabel("G [mg/dL]","fontsize",fs);
-    set(gca,"fontsize",fs)
-    legend("ode15s","location","northeast")
-    
-    plot(Th(1:75),y(1:75),"linewidth",3)
-    xlabel("t [h]","fontsize",fs);
-    ylabel("y [mg/dL]","fontsize",fs);
-    set(gca,"fontsize",fs)
-    legend("ode15s","location","northeast")    
-    
+
+hold on
+plot(T*min2h,y,"linewidth",3)
+xlabel("t [h]","fontsize",fs);
+ylabel("CGM [mg/dL]","fontsize",fs);
+
+plot(TEuler*min2h,yEuler,"linewidth",3,'LineStyle','--')
+set(gca,"fontsize",fs)
+legend(["ode15s","Euler method"],"location","northeast")
+set(gca,"fontsize",fs)
+
+xlim([0,TEuler(end)*min2h])
 hold off
 
 % The steady state vector is 

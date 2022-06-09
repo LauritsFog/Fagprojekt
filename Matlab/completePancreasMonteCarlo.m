@@ -101,7 +101,7 @@ rampingfunction = @sigmoidRamp;
 tzero = (0.5*h2min)/Ts;
 
 % Control algorithm
-ctrlAlgorithm = @pidControllerSupBolus;
+ctrlAlgorithm = @pidController;
 
 % Halting iterations used in PID controller
 haltinghours = 3;
@@ -134,13 +134,21 @@ parfor i = 1:k
     p = CreatePerson();
     [xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
     
+%     ctrlPar = [
+%       5.0;    % [min]     Sampling time
+%       0;   %           Proportional gain
+%       0.0001; %           Integral gain
+%       0.35; %           Derivative gain
+%     108.0;    % [mg/dL]   Target blood glucose concentration
+%     us(1)];     % [mU/min]  Nominal basal rate 
+
     ctrlPar = [
       5.0;    % [min]     Sampling time
-      0;   %           Proportional gain
-      0.0001; %           Integral gain
-      0.35; %           Derivative gain
+      0.15;   %           Proportional gain
+      0.0003; %           Integral gain
+      0.5; %           Derivative gain
     108.0;    % [mg/dL]   Target blood glucose concentration
-    us(1)];     % [mU/min]  Nominal basal rate 
+    us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
     
     ctrlPar(6) = us(1);
     x0 = xs;
@@ -148,10 +156,14 @@ parfor i = 1:k
     % Creates new mealplan
     D = MealPlan(days,1)';
     
-    [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
+%     [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
+%     simModel, observationModel, ctrlAlgorithm, ...
+%     ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+%     rampingfunction, dg, dt, gridTime, opts);
+    
+    [T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-    rampingfunction, dg, dt, gridTime, opts);
+    ctrlPar, ctrlState, simMethod, opts);
 
     % Blood glucose concentration
     Gsc{i} = mvpOutput(X,1)'; % [mg/dL]
