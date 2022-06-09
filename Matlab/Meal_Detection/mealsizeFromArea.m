@@ -56,6 +56,8 @@ plot(testmeal)
 % hold off
 
 %% Noise
+close all;clear;clc
+loadLib()
 Days=2;
 InitData();
 
@@ -83,26 +85,92 @@ hold off
 y=[GscSupBolusPIDsim;dGF;ddGF;mealestNoice];
 
 
-%% Debug plot
+% Debug plot
 tiledlayout(3,1)
 % First plot
 ax1 = nexttile;
+%yyaxis right
+plot(tspan,GscSupBolusPIDsim,'k')
+% yyaxis left
+%plot(tspan,mealestNoice)
+title('Measurement noice')
+xlabel('Time [min]')
+ylabel('CGM [mg/dL]')
+
+% Second plot
+ax2 = nexttile;
+plot(tspan,dGF,'b')
+title("Approximation G_F'")
+xlabel('Time [min]')
+ylabel("CGM' [mg/dl min]")
+
+% Third plot
+ax3 = nexttile;
+plot(tspan,ddGF,'g')
+title("Approximation G_F''")
+xlabel('Time [min]')
+ylabel("CGM'' [mg/dl min^2]")
+linkaxes([ax1 ax2 ax3],'x')
+
+y=[GscSupBolusPIDsim;dGF;ddGF];
+
+
+%% test 
+times=10;
+for i=1:times
+    [TSupBolusPIDsim, XSupBolusPIDsim, YSupBolusPIDsim, USupBolusPIDsim] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+
+% Blood glucose concentration
+GscSupBolusPIDsim = mvpOutput(XSupBolusPIDsim,30);
+%GscSupBolusPIDsim = YSupBolusPIDsim; % [mg/dL]
+%plot(GscSupBolusPIDsim)
+
+[testmealNoice, mealestNoice,dGF,ddGF]=MealSize(GscSupBolusPIDsim,tspan);
+subplot(times,1,i)
+
+hold on
 yyaxis right
 plot(GscSupBolusPIDsim)
 yyaxis left
 plot(mealestNoice)
+hold off
+end
+
+%% GRID på ny
+close all;
+[TSupBolusPIDsim, XSupBolusPIDsim, YSupBolusPIDsim, USupBolusPIDsim] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlParSupBolus, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+
+% Blood glucose concentration
+GscSupBolusPIDsim = mvpOutput(XSupBolusPIDsim,4);
+
+
+dg=10;
+dt=1;
+%12 is arbitary chosen the parameter doesnt do anything in the function
+[GF,dGF,GRID]=GridAlgo(GscSupBolusPIDsim,dg,dt,12,tspan);
+
+plot(tspan,GRID)
+
+tiledlayout(2,1)
+% First plot
+ax1 = nexttile;
+yyaxis right
+plot(tspan,GRID)
+yyaxis left
+plot(tspan,GscSupBolusPIDsim)
 title('GF')
 
 % Second plot
 ax2 = nexttile;
-plot(dGF,'b')
+plot(tspan,dGF)
 title('dGF')
 
-% Third plot
-ax3 = nexttile;
-plot(ddGF,'g')
-title('ddGF')
-linkaxes([ax1 ax2 ax3],'x')
 
-y=[GscSupBolusPIDsim;dGF;ddGF];
+
+
+
 
