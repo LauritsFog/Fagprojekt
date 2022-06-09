@@ -126,7 +126,7 @@ tzero = (0.5*h2min)/Ts;
 %% Setting parameters
 
 % Control algorithm
-ctrlAlgorithm = @pidControllerSupBolus;
+ctrlAlgorithm = @pidController;
 
 penalties = nan(5,5,5);
 
@@ -137,9 +137,9 @@ simPID = 0;
 % 0.0005; %           Integral gain
 % 0.2500; %           Derivative gain
 
-KPs = linspace(0, 0.05, 8);
+KPs = linspace(0, 0.5, 8);
 KIs = linspace(0, 0.0005, 8);
-KDs = linspace(0, 0.5, 8);
+KDs = linspace(0, 1, 8);
 
 %% Simulating
 
@@ -155,18 +155,18 @@ for i = 1:length(KPs)
                 108.0;    % [mg/dL]   Target blood glucose concentration
                 us(1)];     % [mU/min]  Nominal basal rate 
             
-%             [T, X, Y, U] = closedLoopSimulation(x0, tspan, Duse, p, ...
-%                     simModel, observationModel, ctrlAlgorithm, ...
-%                     ctrlPar, ctrlState, simMethod, opts);
+            [T, X, Y, U] = closedLoopSimulation(x0, tspan, Duse, p, ...
+                    simModel, observationModel, ctrlAlgorithm, ...
+                    ctrlPar, ctrlState, simMethod, opts);
 
 %             [T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
 %                 simModel, observationModel, ctrlAlgorithm, ...
 %                 ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
 
-            [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Duse, p, ...
-                simModel, observationModel, ctrlAlgorithm, ...
-                ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-                rampingfunction, dg, dt, gridTime, opts);
+%             [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Duse, p, ...
+%                 simModel, observationModel, ctrlAlgorithm, ...
+%                 ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+%                 rampingfunction, dg, dt, gridTime, opts);
 
             penalties(i,j,k) = asymmetricQuadraticPenaltyFunction(T,Y,p);
         end

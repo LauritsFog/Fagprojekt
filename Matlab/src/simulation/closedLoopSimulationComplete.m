@@ -160,7 +160,7 @@ for k = 1:N
             % tpause = round(alpha*haltingiter*(1+mean(dGF(end-6:end))));
             tpause = haltingiter;
             
-            ubok = beta*uk(1)*haltingiter*(1+mean(dGF(end-6:end)));
+            ubok = beta*uk(1)*haltingiter*max([0,1+mean(dGF(end-6:end))]);
             % ubok = uk(1)*haltingiter;
         else
             ubok = 0;

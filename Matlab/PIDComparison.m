@@ -101,12 +101,6 @@ tspan = Ts*(0:N);
 % Initial condition
 x0 = xs;
 
-% Manipulated inputs
-Uopen = repmat(us, 1, N);
-
-% Disturbance variables
-D = zeros(1, N);
-
 % Disturbance variables with multiple meals
 Dmealplan = MealPlan(days,false)';
 
@@ -143,6 +137,11 @@ ctrlPar = [
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
 
+% Parameters for grid algorithm
+dg = 8;
+dt = 1;
+gridTime = 3*h2min/Ts;
+
 %% Simulation optimal bolus
 
 [TOptBolus, XOptBolus, YOptBolus, UOptBolus] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
@@ -159,7 +158,9 @@ simPID = 1;
 
 [TSupBolusPIDsim, XSupBolusPIDsim, YSupBolusPIDsim, USupBolusPIDsim] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+    ctrlPar, ctrlState, simMethod, tzero, ...
+    haltingiter, idxbo, simPID, rampingfunction, ...
+    dg, dt, gridTime, opts);
 
 % Blood glucose concentration
 GscSupBolusPIDsim = mvpOutput(XSupBolusPIDsim); % [mg/dL]
@@ -180,7 +181,9 @@ simPID = 0;
 
 [TSupBolus, XSupBolus, YSupBolus, USupBolus] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
+    ctrlPar, ctrlState, simMethod, tzero, ...
+    haltingiter, idxbo, simPID, rampingfunction, ...
+    dg, dt, gridTime, opts);
 
 % Blood glucose concentration
 GscSupBolus = mvpOutput(XSupBolus); % [mg/dL]
@@ -212,7 +215,7 @@ p3 = plot(TSupBolusPIDsim*min2h, GscSupBolusPIDsim,'Color',c(3,:));
 xlim([t0, tf]*min2h);
 ylim([0, max([GscOptBolus,GscSupBolus])*1.2]);
 ylabel({'CGM measurements', '[mg/dL]'});
-legend([p0,p1,p2,p3],'Steady state', 'Open loop', 'Closed loop', 'Open loop with optimal bolus')
+legend([p0,p1,p2,p3],'Steady state', 'Optimal bolus', 'Super bolus with CGM slope', 'Super bolus with PID sim.')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -234,9 +237,9 @@ ylabel({'Basal insulin', '[mU/min]'});
 subplot(414);
 stem(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 'o', 'MarkerSize', 5, 'Color', c(1,:));
 hold on
-stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 's', 'MarkerSize', 5, 'Color', c(2,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolus(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 'd', 'MarkerSize', 5, 'Color', c(2,:));
 hold on
-stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolusPIDsim(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 's', 'MarkerSize', 5, 'Color', c(3,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolusPIDsim(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', '*', 'MarkerSize', 5, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
 ylim([0, 1.2*Ts*mU2U*max([max(UOptBolus(2, :)),max(USupBolus(2, :)),max(USupBolusPIDsim(2, :))])]);
 ylabel({'Bolus insulin', '[Uopen]'});
@@ -249,11 +252,11 @@ subplot(1,3,1)
 PlotProcent(ComputeProcent(GscOptBolus, Gcrit));
 title("Optimal bolus" + newline)
 subplot(1,3,2)
+PlotProcent(ComputeProcent(GscSupBolus, Gcrit));
+title("Super bolus with CGM slope" + newline)
+subplot(1,3,3)
 PlotProcent(ComputeProcent(GscSupBolusPIDsim, Gcrit));
 title("Super bolus with PID sim." + newline)
-subplot(1,3,3)
-PlotProcent(ComputeProcent(GscSupBolus, Gcrit));
-title("Super bolus without PID sim." + newline)
 
 %% Simulation optimal bolus standard PID
 
