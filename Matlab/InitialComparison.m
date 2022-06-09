@@ -122,12 +122,6 @@ D = zeros(1, N);
 % Disturbance variables with multiple meals
 Dmealplan = MealPlan(days,false)';
 
-% Meal and meal bolus after 1 hour
-tMeal           = 1*h2min;        % [min]
-idxMeal         = tMeal/Ts + 1;   % [#]
-D(1, idxMeal)   = 90   /Ts;       % [g CHO/min]
-Uopen(2, idxMeal)   = 0;       % [mU/min]
-
 % Select which D to use
 Duse = Dmealplan;
 
@@ -138,7 +132,7 @@ scalingFactor = 1e-2;
 idxbo = 2;
 
 % Initial guess of the optimal insulin bolus
-ubo0 = 1e+3; % [mU/min]
+ubo0 = 0; % [mU/min]
 
 %% Simulate open loop with optimal bolus
 

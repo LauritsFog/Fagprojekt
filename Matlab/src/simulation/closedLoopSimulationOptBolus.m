@@ -130,11 +130,9 @@ for k = 1:N
     if dk ~= 0
         tpause = haltingiter;
         
-        disp(k)
+        Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, N, tzero, haltingiter, rampingfunction);
         
-        % Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, N, tzero, haltingiter, rampingfunction);
-        
-        Ubolus = repmat([ctrlPar(6);0], 1, length(D));
+        % Ubolus = repmat([ctrlPar(6);0], 1, length(D));
         
         % plot(linspace(1,length(Ubolus),length(Ubolus)),Ubolus)
         
