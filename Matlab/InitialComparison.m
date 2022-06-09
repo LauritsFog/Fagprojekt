@@ -93,7 +93,7 @@ objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 ctrlPar(6) = us(1);
 
 % Initial and final time
-days = 2;
+days = 3;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -122,12 +122,6 @@ D = zeros(1, N);
 % Disturbance variables with multiple meals
 Dmealplan = MealPlan(days,false)';
 
-% Meal and meal bolus after 1 hour
-tMeal           = 1*h2min;        % [min]
-idxMeal         = tMeal/Ts + 1;   % [#]
-D(1, idxMeal)   = 90   /Ts;       % [g CHO/min]
-Uopen(2, idxMeal)   = 0;       % [mU/min]
-
 % Select which D to use
 Duse = Dmealplan;
 
@@ -141,6 +135,8 @@ idxbo = 2;
 ubo0 = 0; % [mU/min]
 
 %% Simulate open loop with optimal bolus
+
+clc;
 
 tzero = 0;
 haltingiter = 0;
