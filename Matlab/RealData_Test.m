@@ -15,7 +15,7 @@ X = readtable(filename);
 
 Gsc = table2array(X(:,2))*mmolL2mgdL;
 Gsc = Gsc(1:Days*288);
-
+t = (1:1:Days*288)*5*min2h;
 
 %% Meal vector
 

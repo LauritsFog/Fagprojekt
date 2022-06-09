@@ -18,20 +18,20 @@ Snack 2:     20.00 - 22.00
 
 %Breakfast 
 Bm = [90 100 110 120 130 140 150]/5; %Sizes of meals
-Bt = [78:1:108]; % Time inteval
+Bt = [78:1:108]; % Time inteval  6.30 - 9.00
 
 % Lunch
 Lm = [70 80 90 100]/5; % Sizes of meals
-Lt = [138:1:162];      % Time inteval
+Lt = [138:1:162];      % Time inteval 11.30 - 13.30
 
 % Dinner
 Dm = [70 80 90 100]/5; % Sizes of meals
-Dt = [210:1:228];       % Time inteval
+Dt = [210:1:228];       % Time inteval 17.30 - 19.00
 
 % Snack
 Sm = [18, 19, 20, 21, 22]/5; % Sizes of snacks
-St1 = [180:1:192]; % time inteval for snack 1
-St2 = [240:1:264]; % time inteval for snack 2
+St1 = [180:1:192]; % time inteval for snack 1 (15.00-16.00)
+St2 = [240:1:264]; % time inteval for snack 2 (20.00 - 22.00)
 
 % Initialize a vector with zeroes that is 1 day long 
 % (24h*60min / 5min = 1440/5 = 288)
