@@ -3,8 +3,17 @@ clear; clc; clear all;
 % Function that initializes the data, and loads the functions used.
 loadLib();
 
-Days = 3;
+Days = 6;Noise = 5;
 InitData();
+
+p = CreatePerson();
+
+correctMeal = zeros(1,length(D));
+for i=1:length(D)
+   if Duse(i)>0
+    correctMeal(i) = 1;
+   end
+end
 
 % 3 mmol/dl er nedre grænse
 % vi vil gerne ligge mellem 3.9 og 10
@@ -1135,8 +1144,11 @@ legend('Procent found within 1 hour','Average time taken to find meal')
 
 % This is done in the function called mvpNoise
 
-simModel = @mvpNoise;
-simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+simModel = @mvpModel;
+
+%simModel = @mvpNoise;
+
+%simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 % Halting iterations used in PID controller
 haltinghours = 2;
@@ -1146,7 +1158,7 @@ haltingiter = haltinghours*h2min/Ts;
 ctrlAlgorithm = @pidControllerSupBolus;
 
 % Closed-loop simulation
-[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
+[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
     ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
     rampingfunction, dg, dt, gridTime, opts);
@@ -1163,7 +1175,7 @@ x_snack=GRID_Filter(GRID_snack);
 
 figure(1);
 subplot(2,1,1)
-plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal,'g-') %,t,correctSnack,'y-')
+plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
 yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
@@ -1171,7 +1183,7 @@ xlabel('Time [h]');
 title('With Filter')
 
 subplot(2,1,2)
-plot(T*min2h, Gsc,'b-',t,GRID_snack*300,'r-',t,correctMeal,'g-') %,t,correctSnack,'y-')
+plot(T*min2h, Gsc,'b-',t,GRID_snack*300,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
 yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});

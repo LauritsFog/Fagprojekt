@@ -6,7 +6,7 @@
         % --------------------- Formatting --------------------- 
 
 % Font size
-fs = 11;
+fs = 12;
 
 % Line width
 lw = 3;
@@ -94,7 +94,7 @@ Uopen = repmat(us, 1, N);
 D = zeros(1, N);
 
 % Disturbance variables with multiple meals
-Dmealplan = MealPlan(2,false)';
+Dmealplan = MealPlan(Days,false)';
 
 % Meal and meal bolus after 1 hour
 tMeal           = 1*h2min;        % [min]
