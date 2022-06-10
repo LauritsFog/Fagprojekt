@@ -12,12 +12,9 @@ Noise = 5;
 dg= 3;
 dt=1;
 
-% Create person
-p = CreatePerson();
+fs = 14;
 
-% Creates the mealplan
-Dsnack = MealPlan(Days,1);
-Dsnack = Dsnack';
+load('TheOneAndOnlyMealPlanAndParameters.mat')
 
 D = Dsnack;
 for i=1:length(D)
@@ -72,6 +69,7 @@ x=GRID_Filter(GRID);
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
 fig1 = figure(1);
+fig1.Position = [50 50 1340 600];
 subplot(411);
 hold on
 % Plot blood glucose concentration
@@ -85,7 +83,7 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('Measurement noise - No snack','FontSize',14)
+title('Figure 5.1','FontSize',16)
 hold off
 
 subplot(412)
@@ -94,7 +92,7 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('Grid Algorithm on simulation','FontSize',14)
+title('Figure 5.2','FontSize',16)
 
 %{
 subplot(3,1,3)
@@ -166,7 +164,7 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('Measurement noise - With snack','FontSize',14)
+title('Figure 5.3','FontSize',16)
 hold off
 
 subplot(414)
@@ -176,7 +174,7 @@ ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
 legend({'CGM','Predicted Meal','Actual Meal','snack'},'Position',[0.82 0.48 0.01 0.005])
-title('Grid Algorithm on simulation','FontSize',14)
+title('Figure 5.4','FontSize',16)
 
 %{
 subplot(4,1,4)
@@ -201,6 +199,7 @@ title('Preformance (measurement noise - snack)')
 %}
 %fprintf('---------- Measurement noise - With snack -------------- \n \n')
 
+%%
 saveas(fig1,[pwd '/Images/Noise.png']);
 
 
@@ -224,7 +223,8 @@ M100 = 0;
 N100 = 0;
 Av100 = 0;
 
-figure(2);
+fig2 = figure(2);
+fig2.Position = [50 50 1340 600];
 hold on
 %{
 for j = length(Gcrit):-1:1
@@ -281,7 +281,7 @@ parfor i=1:X
     
     % Plot blood glucose concentration
     plot(T*min2h, Gsc, 'Color',c(1,:));
-    plot(T*min2h, GRID*400,'r-','LineWidth',0.5);
+    %plot(T*min2h, GRID*400,'r-','LineWidth',0.5);
     %yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
     xlim([t0, tf]*min2h);
     
@@ -302,7 +302,7 @@ disp(B)
 disp(B1)
 disp(C)
 
-plot(t,GscAv,'b-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
+plot(t,GscAv,'y-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
 xlim([t0, tf]*min2h);
 ylim([0 400])
 ylabel({'CGM', '[mg/dL]'});
@@ -310,7 +310,8 @@ xlabel('Time [h]');
 %title('Simulation 100 poeple - Measurement noise')
 hold off
 
-saveas(figure(2),[pwd '/Images/Noise100.png']);
+%%
+saveas(figure(2),[pwd '/Images/Noise100_31.png']);
 
 
 %% EulerMaruyama noise Simulation 
@@ -344,7 +345,8 @@ x=GRID_Filter(GRID);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
-figure(3);
+fig3 = figure(3);
+fig3.Position = [50 50 1340 600];
 subplot(411);
 hold on
 % Plot blood glucose concentration
@@ -358,7 +360,7 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('EulerMaruyama - No snack','FontSize',14)
+title('Figure 6.1','FontSize',16)
 hold off
 
 subplot(412)
@@ -367,7 +369,7 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('Grid Algorithm on simulation','FontSize',14)
+title('Figure 6.2','FontSize',16)
 
 
 % -------------- Evaluation of simulation -------------------
@@ -426,7 +428,7 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('EulerMaruyama - With snack','FontSize',14)
+title('Figure 6.3','FontSize',16)
 hold off
 
 subplot(414)
@@ -436,7 +438,9 @@ ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
 legend({'CGM','Predicted Meal','Actual Meal','Snack'},'Position',[0.82 0.48 0.01 0.005])
-title('Grid Algorithm on simulation','FontSize',14)
+title('Figure 6.4','FontSize',16)
+
+%%
 
 saveas(figure(3),[pwd '/Images/EulerM.png']);
 
@@ -477,7 +481,8 @@ M100 = 0;
 N100 = 0;
 Av100 = 0;
 
-figure(4);
+fig4 = figure(4);
+fig4.Position = [50 50 1340 600];
 hold on
 %{
 for j = length(Gcrit):-1:1
@@ -535,8 +540,8 @@ parfor i=1:X
     
     % Plot blood glucose concentration
     plot(T*min2h, Gsc, 'Color',c(1,:)); 
-    plot(T*min2h, GRID*400,'r-','LineWidth',0.5);
-    yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+    %plot(T*min2h, GRID*400,'r-','LineWidth',0.5);
+    %yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
     xlim([t0, tf]*min2h);
     
 end
@@ -555,7 +560,7 @@ disp(B)
 disp(B1)
 disp(C)
 
-plot(t,GscAv,'b-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
+plot(t,GscAv,'y-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
 xlim([t0, tf]*min2h);
 ylim([0 400])
 ylabel({'CGM', '[mg/dL]'});
@@ -563,6 +568,6 @@ xlabel('Time [h]');
 %title('Simulation 100 people - Eulermaruyama')
 hold off
 
-
-saveas(figure(4),[pwd '/Images/EulerM100.png']);
+%%
+saveas(figure(4),[pwd '/Images/EulerM100_31.png']);
 
