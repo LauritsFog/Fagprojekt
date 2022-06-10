@@ -52,25 +52,21 @@ end
 dg=3;
 dt=1;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
-x=GRID_Filter(GRID);
 
 figure(4);
-subplot(211)
-plot(t, Gsc,'k-',t,x*350,'r-',t,correctMeal*350,'g-')
+hold on
+plot(t, Gsc,'k-');
+plot(t,GRID*350,'r-',t,correctMeal*350,'g-','LineWidth',1.5)
+hold off
 xlim([0 t(end)]);
 ylim([0 350]);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
-legend('CGM measurement','Predicted Meal','Actual Meal')
-title('Real Data - GRID algo')
+legend('CGM','Predicted Meal','Actual Meal')
+%title('Real Data - GRID algo')
 
-subplot(212)
-plot(t, Gsc,'k-',t,GRID*350,'r-',t,correctMeal*350,'g-')
-yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
-xlim([t0, tf]*min2h);
-ylabel({'CGM measurements', '[mg/dL]'});
-xlabel('Time [h]');
-title('Without Filter')
+saveas(figure(4),[pwd '/Images/RealDataGRID.png']);
+
 
 
 

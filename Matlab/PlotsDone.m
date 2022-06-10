@@ -4,13 +4,13 @@ clear; clear all;
 loadLib();
 clc;
 
-Days = 5;
+Days = 3;
 InitData();
 
 % Noise Level
 Noise = 5;
-dg= 10;
-dt=10;
+dg= 3;
+dt=1;
 
 % Create person
 p = CreatePerson();
@@ -89,7 +89,7 @@ title('Measurement noise - No snack','FontSize',14)
 hold off
 
 subplot(412)
-plot(T*min2h, Gsc,'k-',T*min2h, x*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
+plot(T*min2h, Gsc,'k-',T*min2h, GRID*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
@@ -119,14 +119,10 @@ PlotProcent(V);
 title('Preformance (measurement noise - no snack)')
 %}
 
-fprintf('---------- Measurement noise - No snack -------------- \n \n')
-MealCorrectness(D,x,1)
-
-saveas(fig1,[pwd '/Images/Noise.png']);
+%fprintf('---------- Measurement noise - No snack -------------- \n \n')
 
 
-
-% Measurement noise 
+% __________ Measurement noise Snack 
 
 % This is done in the function called mvpNoise
 
@@ -174,7 +170,7 @@ title('Measurement noise - With snack','FontSize',14)
 hold off
 
 subplot(414)
-plot(T*min2h, Gsc,'k-',T*min2h, x*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
+plot(T*min2h, Gsc,'k-',T*min2h, GRID*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
@@ -203,13 +199,13 @@ figure(5);
 PlotProcent(V);
 title('Preformance (measurement noise - snack)')
 %}
-fprintf('---------- Measurement noise - With snack -------------- \n \n')
-MealCorrectness(D,x,1)
+%fprintf('---------- Measurement noise - With snack -------------- \n \n')
 
 saveas(fig1,[pwd '/Images/Noise.png']);
 
+
 %% Measurement noise simulation 100 Persons (no snack)  
-%{
+
 simModel = @mvpModel;
 % Halting iterations used in PID controller
 haltinghours = 2;
@@ -224,15 +220,22 @@ t = T*min2h;
 GscAv = zeros(1,length(t));
 GridAv = zeros(1,length(t));
 
-figure(6);
-subplot(211);
+M100 = 0;
+N100 = 0;
+Av100 = 0;
+
+figure(2);
 hold on
+%{
 for j = length(Gcrit):-1:1
         area([t0, tf]*min2h,[Gcrit(j),Gcrit(j)],'FaceColor',Gcritcolors{j},'LineStyle','none')
         hold on
 end
+%}
 
-parfor i=1:100
+X = 100;
+
+parfor i=1:X
     
     %Creates new person
     p = CreatePerson();
@@ -268,39 +271,49 @@ parfor i=1:100
     [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,T*min2h);
     x=GRID_Filter(GRID);
     
+    [M, N, Av] = MealCorrectness(D,x)
+    
+    M100 = M100+M;
+    N100 = N100+N;
+    Av100 = Av100+Av;
+    
     GridAv = GridAv+x;
     
     % Plot blood glucose concentration
-    plot(T*min2h, Gsc, 'Color',c(1,:)); 
-    yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+    plot(T*min2h, Gsc, 'Color',c(1,:));
+    plot(T*min2h, GRID*400,'r-','LineWidth',0.5);
+    %yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
     xlim([t0, tf]*min2h);
     
 end
-GscAv = GscAv/100;
 
-[GF,dGF,GRID]=GridAlgo(GscAv,dg,dt,12,t);
-    x=GRID_Filter(GRID);
-yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+GscAv = GscAv/X;
+M100 = M100;
+N100 = N100;
+procent = round(N100/M100*100,2);
+Av100 = Av100/X;
 
-plot(t,GscAv,'y-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
+A = sprintf('Total number of meals: %g',M100);
+B = sprintf('Total number of founds meals: %g',N100);
+B1 = sprintf('Procent meals found: %g',procent);
+C = sprintf('Average time to detect meal: %g min\n',Av100);
+disp(A)
+disp(B)
+disp(B1)
+disp(C)
+
+plot(t,GscAv,'b-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
 xlim([t0, tf]*min2h);
 ylim([0 400])
-ylabel({'CGM measurements', '[mg/dL]'});
+ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('Simulation 100 people')
+%title('Simulation 100 poeple - Measurement noise')
 hold off
 
-subplot(2,1,2)
-plot(t,GscAv,'k-',t,x*300,'r-')
-xlim([t0, tf]*min2h);
-ylim([min(GscAv)*0.8, max(GscAv)*1.1]);
-ylabel({'CGM measurements', '[mg/dL]'});
-xlabel('Time [h]');
-title('GRID on Average of 100 people')
-%}
+saveas(figure(2),[pwd '/Images/Noise100.png']);
 
 
-%% EulerMaruyama noise Simulation without snack
+%% EulerMaruyama noise Simulation 
 
 % This is done in the function called mvpNoise
 
@@ -331,8 +344,8 @@ x=GRID_Filter(GRID);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
-figure(7);
-subplot(211);
+figure(3);
+subplot(411);
 hold on
 % Plot blood glucose concentration
 for i = length(Gcrit):-1:1
@@ -343,19 +356,18 @@ plot(T*min2h, Gsc, 'Color',c(1,:));
 yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM measurements', '[mg/dL]'});
+ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('EulerMaruyama - No snack')
+title('EulerMaruyama - No snack','FontSize',14)
 hold off
 
-subplot(212)
-plot(T*min2h, Gsc,'k-',T*min2h, x*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
+subplot(412)
+plot(T*min2h, Gsc,'k-',T*min2h, GRID*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM measurements', '[mg/dL]'});
+ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-legend('CGM','Predicted Meal','Actual Meal')
-title('Grid Algorithm on simulation')
+title('Grid Algorithm on simulation','FontSize',14)
 
 
 % -------------- Evaluation of simulation -------------------
@@ -363,19 +375,14 @@ title('Grid Algorithm on simulation')
 % Initialize critical range for glucose concentration in the blood    
 Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
 
+%{
 figure(8);
 [V] = ComputeProcent(Gsc, Gcrit);
 PlotProcent(V);
 title('Preformance (Eulermaruyama noise - no snack)')
+%}
 
-fprintf('---------- Eulermaruyama - No snack -------------- \n \n')
-MealCorrectness(D,x,1)
-
-saveas(figure(7),[pwd '/Images/EulerM.png']);
-saveas(figure(8),[pwd '/Images/EulerM_pref.png']);
-
-
-%% EulerMaruyama noise Simulation with snack
+% :_______________EulerMaruyama noise Simulation with snack
 
 % This is done in the function called mvpNoise
 
@@ -406,8 +413,7 @@ x=GRID_Filter(GRID);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
-figure(9);
-subplot(211);
+subplot(413);
 hold on
 % Plot blood glucose concentration
 for i = length(Gcrit):-1:1
@@ -418,27 +424,28 @@ plot(T*min2h, Gsc, 'Color',c(1,:));
 yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM measurements', '[mg/dL]'});
+ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('EulerMaruyama - No snack')
+title('EulerMaruyama - With snack','FontSize',14)
 hold off
 
-subplot(212)
-plot(T*min2h, Gsc,'k-',T*min2h, x*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
+subplot(414)
+plot(T*min2h, Gsc,'k-',T*min2h, GRID*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM measurements', '[mg/dL]'});
+ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-legend('CGM','Predicted Meal','Actual Meal','Snack')
-title('Grid Algorithm on simulation')
+legend({'CGM','Predicted Meal','Actual Meal','Snack'},'Position',[0.82 0.48 0.01 0.005])
+title('Grid Algorithm on simulation','FontSize',14)
 
-
+saveas(figure(3),[pwd '/Images/EulerM.png']);
 
 % -------------- Evaluation of simulation -------------------
 
 % Initialize critical range for glucose concentration in the blood    
 Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
 
+%{
 figure(10);
 [V] = ComputeProcent(Gsc, Gcrit);
 PlotProcent(V);
@@ -446,12 +453,11 @@ title('Preformance (Eulermaruyama noise - snack)')
 
 fprintf('---------- Eulermaruyama - With snack -------------- \n \n')
 MealCorrectness(D,x,1)
-saveas(figure(9),[pwd '/Images/EulerM_Snack.png']);
-saveas(figure(10),[pwd '/Images/EulerM_Snack_pref.png']);
+%}
 
 
 %% EulerMaruyama noise simulation 100 Persons (no snack)  
-%{
+
 simModel = @mvpNoise;
 simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 % Halting iterations used in PID controller
@@ -461,24 +467,28 @@ haltingiter = haltinghours*h2min/Ts;
 % Control algorithm
 ctrlAlgorithm = @pidControllerSupBolus;
 
-dg=10;
-dt=10;
-
 T = 5:5:Days*24*60;
 t = T*min2h;
 
 GscAv = zeros(1,length(t));
 GridAv = zeros(1,length(t));
 
-figure(11);
-subplot(211);
+M100 = 0;
+N100 = 0;
+Av100 = 0;
+
+figure(4);
 hold on
+%{
 for j = length(Gcrit):-1:1
         area([t0, tf]*min2h,[Gcrit(j),Gcrit(j)],'FaceColor',Gcritcolors{j},'LineStyle','none')
         hold on
 end
+%}
 
-parfor i=1:100
+X = 100;
+
+parfor i=1:X
     
     %Creates new person
     p = CreatePerson();
@@ -513,36 +523,46 @@ parfor i=1:100
     GscAv = GscAv+Gsc;
     
     [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,T*min2h);
-    x=GRID_Filter(GRID);
+    %x=GRID_Filter(GRID);
+    
+    [M, N, Av] = MealCorrectness(D,x)
+    
+    M100 = M100+M;
+    N100 = N100+N;
+    Av100 = Av100+Av;
     
     GridAv = GridAv+x;
     
     % Plot blood glucose concentration
     plot(T*min2h, Gsc, 'Color',c(1,:)); 
+    plot(T*min2h, GRID*400,'r-','LineWidth',0.5);
     yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
     xlim([t0, tf]*min2h);
     
 end
-GscAv = GscAv/100;
+GscAv = GscAv/X;
+M100 = M100;
+N100 = N100;
+procent = round(N100/M100*100,2);
+Av100 = Av100/X;
 
-[GF,dGF,GRID]=GridAlgo(GscAv,dg,dt,12,t);
-    x=GRID_Filter(GRID);
-yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+A = sprintf('Total number of meals: %g',M100);
+B = sprintf('Total number of founds meals: %g',N100);
+B1 = sprintf('Procent meals found: %g',procent);
+C = sprintf('Average time to detect meal: %g min\n',Av100);
+disp(A)
+disp(B)
+disp(B1)
+disp(C)
 
-plot(t,GscAv,'y-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
+plot(t,GscAv,'b-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
 xlim([t0, tf]*min2h);
 ylim([0 400])
-ylabel({'CGM measurements', '[mg/dL]'});
+ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('Simulation 100 people')
+%title('Simulation 100 people - Eulermaruyama')
 hold off
 
-subplot(2,1,2)
-plot(t,GscAv,'k-',t,x*300,'r-')
-xlim([t0, tf]*min2h);
-ylim([min(GscAv)*0.8, max(GscAv)*1.1]);
-ylabel({'CGM measurements', '[mg/dL]'});
-xlabel('Time [h]');
-title('GRID on Average of 100 people')
-%}
+
+saveas(figure(4),[pwd '/Images/EulerM100.png']);
 

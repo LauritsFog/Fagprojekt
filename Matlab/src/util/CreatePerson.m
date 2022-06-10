@@ -7,7 +7,7 @@ b = 0; % Mean
 % Parameter values:
 
 % Tau1
-tau1    =  49.0;    % [min]            Insulin absorption time
+tau1    =  49.0;    % [min]            Insulin absorption time 
 a = tau1*0.1; % Standart deviation
 tau1 = tau1 + (a.*randn(1,1) + b);
 

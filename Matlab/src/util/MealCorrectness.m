@@ -1,4 +1,4 @@
-function MealCorrectness(D,x,t)
+function [M, N, Av] = MealCorrectness(D,x)
 %MEALCORRECTNESS is a function that computes how well the GRID algorithm
 %has found meals based on the glucose concetration.
 
@@ -11,52 +11,27 @@ function MealCorrectness(D,x,t)
 
 % --------- Basic info about mealplan and predicted meals ------------
 
-a = nnz(D); % Finds number of meals in the mealplan
-b = nnz(x); % finds number of predicted meals
+M = nnz(D); % Finds number of meals in the mealplan
+N = nnz(x); % finds number of predicted meals
 
-% displays found numbers
-X = sprintf('Number of meals:         %d',a);
-Y = sprintf('Number of found meals:   %d',b);
-disp(X)
-disp(Y)
-
-
-% --------- Number of meals found within t hours  ------------
-count = 0;
-steps = t*12;
-
-for i=1:length(x)
-    if(D(i) > 0)    % checks if there is a meal
-        
-        for j=0:steps  % iterativly goes t hours ahead and checks if there is a predicted meal
-            
-            if(x(i+j)>0) 
-               count = count+1;  % If there is a predicted meal update the count
-            end      
-        end
-        
-    end    
-end
-
-% display number of meals within t hours
-P = round(count/b*100,2);
-fprintf('Meals found within %d hour: %d \n' ,t,count);
-X = sprintf('Procent:  %g\n',P);
-disp(X)
 
 % --------- Average time it take to find meal  ------------
-counts = zeros(1,b);
+counts = zeros(1,N);
 id = 0;
 for i=1:length(x)
     if(D(i) > 0) %  checks if there is a meal
         id = id+1;
         j = 0; 
         while(x(i+j) == 0)
-        j = j+1; 
-        
+        j = j+1;    % Antal 5-min tidsintervaller til næste predicted måltid
         if i+j==length(D)
             break
         end
+        
+        if j == 12*3
+            j = 0;
+            break
+        end 
         
         end
         counts(1,id) = j;
@@ -64,9 +39,11 @@ for i=1:length(x)
     end    
 end
 
-Av = round((sum(counts)/b)*5,2);
-X = sprintf('Average time to detect meal: %g min\n',Av);
-disp(X)
+Av = round((sum(counts)/nnz(counts))*5,2);
+
+
+%X = sprintf('Average time to detect meal: %g min\n',Av);
+%disp(X)
 
 
 

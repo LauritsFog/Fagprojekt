@@ -1171,11 +1171,11 @@ dg=3;
 dt=1;
 t = T*min2h;
 [GF,dGF,GRID_snack]=GridAlgo(Gsc,dg,dt,12,t);
-x_snack=GRID_Filter(GRID_snack);
+x=GRID_Filter(GRID_snack);
 
 figure(1);
 subplot(2,1,1)
-plot(T*min2h, Gsc,'b-',t,x_snack*300,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
+plot(T*min2h, Gsc,'b-',t,x*300,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
 yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
@@ -1189,6 +1189,11 @@ xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('Without Filter')
+
+
+[M, N, Av] = MealCorrectness(Duse,x)
+
+
 
 
 
