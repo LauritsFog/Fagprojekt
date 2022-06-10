@@ -150,7 +150,7 @@ ctrlParSupBolus = [
       5.0;    % [min]     Sampling time
       0.43;   %           Proportional gain
       1e-05;  %           Integral gain
-      2;      %           Derivative gain
+      1;      %           Derivative gain
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];     % [mU/min]  Nominal basal rate 
 
