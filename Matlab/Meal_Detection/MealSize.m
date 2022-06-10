@@ -1,7 +1,7 @@
 function [M,MealEst,dGF,ddGF]=MealSize(Gm,t)
 %% Best values for parameters
-tauF=6;%minuttes
-dG=10;
+tauF=6;%minuttes Var 10S
+dG=3.5;
 dt=1;
 %% Inisializing
 k=length(Gm);
@@ -59,7 +59,10 @@ for j=7:k
     for i =1:5
         %Checking for all "i" if the criterias are meet. If so it sets one
         %of the bools to true-
-        if dGF(j-i)<0.5&& dGF(j-i+1)>0.5&& ddGF(j-i)<0.05&& ddGF(j-i+1)>0.005
+        %USED TO BE
+        %dGF(j-i)<0.5&& dGF(j-i+1)>0.5&& ddGF(j-i)<0.005&&ddGF(j-i+1)>0.005
+        %dGF(j-i)<0.5&& dGF(j-i+1)>0.5&& ddGF(j-i)<0.07&& ddGF(j-i+1)>0.002
+        if dGF(j-i)<0.5&& dGF(j-i+1)>0.5&& ddGF(j-i)<0.07&& ddGF(j-i+1)>0.005
             bool2=true;
             break;
         end
@@ -67,7 +70,7 @@ for j=7:k
     for i =1:5
         %Checking for all "i" if the criterias are meet. If so it sets one
         %of the bools to true-
-        if i<=5&& dGF(j-i)<1.25&& dGF(j-i+1)>1.25&& ddGF(j-i)<0.0125&& ddGF(j-i+1)>0.0125
+        if dGF(j-i)<1.25&& dGF(j-i+1)>1.25&& ddGF(j-i)<0.0125&& ddGF(j-i+1)>0.0125
             bool3=true;
             break;
         end
@@ -82,13 +85,14 @@ for j=7:k
     end
   
     %Constraints in step one and assigning the relevant value to entry j in M
-    if bool1&& GF(j)>100&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
+    if bool1&& Gm(j)>100&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
         M(j)=1;
-    elseif bool2&& GF(j)>100&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
+      
+    elseif bool2&& Gm(j)>100&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
         M(j)=1.5;
-    elseif bool3&& GF(j)>125&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
+    elseif bool3&& Gm(j)>125&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
         M(j)=2.25;
-    elseif bool4&&GF(j)>120&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
+    elseif bool4&&Gm(j)>120&&dGF(j-1)<dGF(j)&&dGF(j)>0.1
         M(j)=1.5;
     else
         M(j)=0;

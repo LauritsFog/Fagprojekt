@@ -15,7 +15,9 @@ X = readtable(filename);
 
 Gsc = table2array(X(:,2))*mmolL2mgdL;
 Gsc = Gsc(1:Days*288);
+
 t = (1:1:Days*288)*5*min2h;
+
 
 %% Meal vector
 
@@ -66,6 +68,50 @@ legend('CGM','Predicted Meal','Actual Meal')
 %title('Real Data - GRID algo')
 
 saveas(figure(4),[pwd '/Images/RealDataGRID.png']);
+
+
+%%
+addpath('G:\My Drive\Dtu\4 Semester\Fagprojekt')
+[testmealNoice, mealestNoice,dGF,ddGF]=MealSize(Gsc,t);
+
+figure(2)
+hold on
+yyaxis right
+plot(Gsc)
+yyaxis left
+plot(mealestNoice)
+hold off
+
+
+
+% Debug plot
+tiledlayout(3,1)
+% First plot
+ax1 = nexttile;
+yyaxis right
+plot(t,Gsc,'k')
+ yyaxis left
+plot(t,mealestNoice)
+title('Measurement noice')
+xlabel('Time [min]')
+ylabel('CGM [mg/dL]')
+
+% Second plot
+ax2 = nexttile;
+plot(t,dGF,'b',t,correctMeal*150,'g-')
+title("Approximation G_F'")
+xlabel('Time [min]')
+ylabel("CGM' [mg/dl min]")
+
+% Third plot
+ax3 = nexttile;
+plot(t,ddGF,'g')
+title("Approximation G_F''")
+xlabel('Time [min]')
+ylabel("CGM'' [mg/dl min^2]")
+linkaxes([ax1 ax2 ax3],'x')
+
+
 
 
 
