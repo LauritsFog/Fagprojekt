@@ -3,8 +3,10 @@ clear; clc; clear all;
 % Function that initializes the data, and loads the functions used.
 loadLib();
 
-Days = 7;Noise = 10;
+Days = 3;Noise = 5;
 InitData();
+
+D = MealPlan(Days,1)';
 
 p = CreatePerson();
 

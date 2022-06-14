@@ -206,6 +206,7 @@ for k = 1:N
     tspank = linspace(tk, tkp1, Nk+1);
     
     % Solve initial value problem
+ 
     [Tk, Xk] = simMethod(simModel, tspank, xk, [], uk, dk, p);
     
     % States at the next time step

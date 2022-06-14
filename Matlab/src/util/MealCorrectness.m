@@ -13,10 +13,16 @@ function [M, TP, Av,xTP] = MealCorrectness(D,GRID,t, statement)
 % Splits up a meal detected as one, but are actually two
 for i=1:length(GRID)
    
-    if(GRID(i) == 1)
+    if(GRID(i) == 1) % Identifies when a meal is predicted
         j = 0;
-        while(GRID(i+j)==1)
+        while(GRID(i+j)==1) % As long as the next index in the GRID oiutput is 1 this whileloop is going
            
+            if(i+j+5 >= length(GRID)) % Makes sure we dont go out of bound
+                break;
+            end
+            
+            % If there is a 20min gap between two meals, its merged as one
+            % meal
            if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 0 && GRID(i+j+4) == 0 && GRID(i+j+5) == 1)
               GRID(i+j+1) = 1;
               GRID(i+j+2) = 1;
@@ -24,21 +30,35 @@ for i=1:length(GRID)
               GRID(i+j+4) = 1;
            end
 
+           % If there is a 15min gap between two meals, its merged as one
+            % meal
            if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 0 && GRID(i+j+4) == 1)
               GRID(i+j+1) = 1;
               GRID(i+j+2) = 1;
               GRID(i+j+3) = 1;
            end
             
+           % If there is a 10min gap between two meals, its merged as one
+            % meal
            if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 1)
               GRID(i+j+1) = 1;
               GRID(i+j+2) = 1;
            end
            
+           % If there is a 5min gap between two meals, its merged as one
+            % meal
            if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 1 )
               GRID(i+j+1) = 1;
            end
+           
+           % makes sure we dont go out of bound
+           if(i+j-2 == 0)
+               break;
+           end
             
+           % If there is an actual meal inside a row of 1's in the GRID
+           % algorithm, it splits up the meal in two and makes some space
+           
            if(D(i+j)>0)
                GRID(i+j-1) = 0;
                GRID(i+j-2) = 0;
@@ -50,13 +70,14 @@ for i=1:length(GRID)
                GRID(i+j+4) = 0;
            end
            
-           
+           % update value
            j = j+1;
  
         end 
     end
     
 end
+% apply GRID FIlter to the updated GRID output
 x=GRID_Filter(GRID);
 
 
@@ -64,17 +85,22 @@ X1 = sprintf('------------------------------------ \n');
 %disp(X1)
 
 % --------- number of found meals ------------
-FP = 0;
 
+%Initialize False Positive and Improved GRID filter
+FP = 0;
 xTP = x;
 
 % Find number of False positive
 for i=1:length(x)
    
+    % Start if there is a predicted meal from the GRID_filter output
     if(x(i) == 1)
         T = 0;
-        for j = 1:33 % time to find false positive
+        
+        % For-loop for detecting if meal is a false postitive
+        for j = 1:33 
 
+            % Out of bound fix
             if i+j==length(x)
             break
             end
@@ -82,7 +108,7 @@ for i=1:length(x)
             break
             end
             
-            
+            % for each step checks if a real meal is within the timeinteval
             if(D(i+round(j/6)) > 0 || D(i-j)>0)
                 T = 1;
                 break;
@@ -90,6 +116,7 @@ for i=1:length(x)
                
         end
     
+        % If no meal is found its a false postitive
         if(T == 0)
             FP = FP +1;
             xTP(i) = 0;
@@ -116,11 +143,11 @@ X2 = sprintf('Total number of meals found: %g',N);
 X1 = sprintf('Percent meals found: %g',p);
 A = sprintf('Number of False Positive: %g',FP);
 B = sprintf('Number of True Positive: %g',TP);
- disp(X3)
- disp(X2)
- disp(A)
- disp(B)
- disp(X1)
+disp(X3)
+disp(X2)
+disp(A)
+disp(B)
+disp(X1)
 end
 
 % --------- Average time it take to find meal  ------------

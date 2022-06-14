@@ -103,7 +103,7 @@ D(1, idxMeal)   = 90   /Ts;       % [g CHO/min]
 Uopen(2, idxMeal)   = 0;       % [mU/min]
 
 % Select which D to use
-D = Dmealplan;
+Duse = Dmealplan;
 
 % Scaling factor for the objective function (purely for numerical reasons)
 scalingFactor = 1e-2;
