@@ -11,7 +11,8 @@ function x=GRID_Filter(GRID)
 %x the filtered binary vector
 %%
 %The filter
-B=[0,1,1,1,1,1,1,1,1,1,1,1];
+% B=[0,1,1,1,1,1,1,1,1,1,1,1];
+B=[0,1];
 % Måske ikke det bedste filter, men det fanger sort set alle de store
 % måltider
 

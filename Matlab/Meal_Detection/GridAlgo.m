@@ -64,6 +64,4 @@ for i=3:k
     end
 end
 
-
-
 end
