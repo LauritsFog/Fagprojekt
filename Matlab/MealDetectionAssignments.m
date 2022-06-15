@@ -3,14 +3,16 @@ clear; clc; clear all;
 % Function that initializes the data, and loads the functions used.
 loadLib();
 
-Days = 6;Noise = 5;
+Days = 3;Noise = 5;
 InitData();
+
+D = MealPlan(Days,1)';
 
 p = CreatePerson();
 
 correctMeal = zeros(1,length(D));
 for i=1:length(D)
-   if Duse(i)>0
+   if D(i)>0
     correctMeal(i) = 1;
    end
 end
@@ -1144,11 +1146,11 @@ legend('Procent found within 1 hour','Average time taken to find meal')
 
 % This is done in the function called mvpNoise
 
-simModel = @mvpModel;
+%simModel = @mvpModel;
 
-%simModel = @mvpNoise;
+simModel = @mvpNoise;
 
-%simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 % Halting iterations used in PID controller
 haltinghours = 2;
@@ -1158,7 +1160,7 @@ haltingiter = haltinghours*h2min/Ts;
 ctrlAlgorithm = @pidControllerSupBolus;
 
 % Closed-loop simulation
-[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Duse, p, ...
+[T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
     ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
     rampingfunction, dg, dt, gridTime, opts);
@@ -1167,33 +1169,32 @@ ctrlAlgorithm = @pidControllerSupBolus;
 Gsc = mvpOutput(X,Noise); % [mg/dL]
 
 
-dg=3;
-dt=1;
+dg=15;
+dt=5;
 t = T*min2h;
-[GF,dGF,GRID_snack]=GridAlgo(Gsc,dg,dt,12,t);
-x=GRID_Filter(GRID_snack);
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
 
-figure(1);
+% Forsøg på at opdele steder hvor den har fundet et meal, men det er
+% faktisk to
+
+[M, N, Av, xTP] = MealCorrectness(D,GRID,t,1);
+
+fig1 = figure(1);
+fig1.Position = [300 550 1740 600];
 subplot(2,1,1)
-plot(T*min2h, Gsc,'b-',t,x*300,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
+plot(T*min2h, Gsc,'b-',t,GRID*300,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
 yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
-title('With Filter')
+title('Normal GRID')
 
-subplot(2,1,2)
-plot(T*min2h, Gsc,'b-',t,GRID_snack*300,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
+subplot(212)
+plot(T*min2h, Gsc,'b-',t,xTP*350,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
 yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
-title('Without Filter')
-
-
-[M, N, Av] = MealCorrectness(Duse,x)
-
-
-
+title('Improved GRID Filter on GRID')
 
 

@@ -5,8 +5,8 @@
 
 %% Init
 loadLib();
-addpath('/Users/frederiknagel/Desktop/RealCGMData_DO_NOT_SHARE')
-
+%addpath('/Users/frederiknagel/Desktop/RealCGMData_DO_NOT_SHARE')
+addpath('G:\My Drive\Dtu\4 Semester\Fagprojekt')
 Days = 3;
 InitData();
 
@@ -53,24 +53,52 @@ end
 
 dg=3;
 dt=1;
-[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,[],t);
 
 figure(4);
-hold on
+subplot(211)
+for i = length(Gcrit):-1:1
+    area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
+    hold on
+end
 plot(t, Gsc,'k-');
-plot(t,GRID*350,'r-',t,correctMeal*350,'g-','LineWidth',1.5)
-hold off
 xlim([0 t(end)]);
 ylim([0 350]);
-ylabel({'CGM measurements', '[mg/dL]'});
+ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-legend('CGM','Predicted Meal','Actual Meal')
 %title('Real Data - GRID algo')
 
+subplot(212)
+plot(t, Gsc,'k-',t,GRID*350,'r-',t,correctMeal*350,'g-','LineWidth',1.5)
+xlim([0 t(end)]);
+ylim([0 350]);
+ylabel({'CGM', '[mg/dL]'});
+xlabel('Time [h]');
+legend({'CGM','Predicted Meal','Actual Meal'},'Position',[0.82 0.50 0.01 0.005])
+
+%%
 saveas(figure(4),[pwd '/Images/RealDataGRID.png']);
+
+%%
+
+tiledlayout(2,1)
+% First plot
+ax1 = nexttile;
+plot(tspan,Gsc,'k',tspan,dGF,'b')
+ylabel('CGM [mg/dL]')
+
+% Second plot
+ax2 = nexttile;
+plot(tspan,dGF,'b',tspan,correctMeal*150,'g-')
+title("Approximation G_F'")
+xlabel('Time [min]')
+ylabel("CGM' [mg/dl min]")
+
+
 
 
 %%
+%{
 addpath('G:\My Drive\Dtu\4 Semester\Fagprojekt')
 [testmealNoice, mealestNoice,dGF,ddGF]=MealSize(Gsc,t);
 
@@ -111,7 +139,7 @@ xlabel('Time [min]')
 ylabel("CGM'' [mg/dl min^2]")
 linkaxes([ax1 ax2 ax3],'x')
 
-
+%}
 
 
 

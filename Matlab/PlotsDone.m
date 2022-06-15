@@ -9,15 +9,20 @@ InitData();
 
 % Noise Level
 Noise = 5;
-dg= 3;
-dt=1;
+dg= 6;
+dt=2;
 
-% Create person
-p = CreatePerson();
+fs = 14;
 
-% Creates the mealplan
-Dsnack = MealPlan(Days,1);
-Dsnack = Dsnack';
+if(Days == 3)
+load('TheOneAndOnlyMealPlanAndParameters.mat')
+end
+
+if(Days == 31)
+p = CreatePerson;
+Dsnack = MealPlan(Days,1)';
+end
+
 
 D = Dsnack;
 for i=1:length(D)
@@ -39,6 +44,7 @@ end
 
 % 3 mmol/dl er nedre grænse
 % vi vil gerne ligge mellem 3.9 og 10
+
 
 
 %% Measurement noise 
@@ -72,6 +78,7 @@ x=GRID_Filter(GRID);
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
 fig1 = figure(1);
+fig1.Position = [50 50 1340 600];
 subplot(411);
 hold on
 % Plot blood glucose concentration
@@ -85,41 +92,35 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('Measurement noise - No snack','FontSize',14)
+title('Figure 5.1','FontSize',16)
 hold off
 
+%{
 subplot(412)
 plot(T*min2h, Gsc,'k-',T*min2h, GRID*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('Grid Algorithm on simulation','FontSize',14)
-
-%{
-subplot(3,1,3)
-plot(T*min2h, Gsc,'k-',t,GRID*300,'r-',t,correctMeal,'g-') %,t,correctSnack,'y-')
-yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
-xlim([t0, tf]*min2h);
-ylabel({'CGM measurements', '[mg/dL]'});
-xlabel('Time [h]');
-title('Without Filter','FontSize',14)
+title('Figure 5.2','FontSize',16)
 %}
-
 % -------------- Evaluation of simulation -------------------
 
-%{
+fprintf('---------- Measurement noise - No snack -------------- \n \n')
 
-% Initialize critical range for glucose concentration in the blood    
-Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
+[M, TP, Av,xTP] = MealCorrectness(D,GRID,T*min2h,1);
 
-fig2 = figure(2);
-[V] = ComputeProcent(Gsc, Gcrit);
-PlotProcent(V);
-title('Preformance (measurement noise - no snack)')
-%}
+subplot(412)
+plot(T*min2h, Gsc,'k-',T*min2h, xTP*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
+xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
+ylabel({'CGM', '[mg/dL]'});
+xlabel('Time [h]');
+title('Figure 5.2','FontSize',16)
 
-%fprintf('---------- Measurement noise - No snack -------------- \n \n')
+
+
+
 
 
 % __________ Measurement noise Snack 
@@ -166,9 +167,10 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('Measurement noise - With snack','FontSize',14)
+title('Figure 5.3','FontSize',16)
 hold off
 
+%{
 subplot(414)
 plot(T*min2h, Gsc,'k-',T*min2h, GRID*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
 xlim([t0, tf]*min2h);
@@ -176,32 +178,34 @@ ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
 legend({'CGM','Predicted Meal','Actual Meal','snack'},'Position',[0.82 0.48 0.01 0.005])
-title('Grid Algorithm on simulation','FontSize',14)
-
-%{
-subplot(4,1,4)
-plot(T*min2h, Gsc,'b-',t,GRID*300,'r-',t,correctMeal,'g-',t,correctSnack,'y-')
-yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
-xlim([t0, tf]*min2h);
-ylabel({'CGM measurements', '[mg/dL]'});
-xlabel('Time [h]');
-title('Without Filter')
+title('Figure 5.4','FontSize',16)
 %}
 
 % -------------- Evaluation of simulation -------------------
 
-% Initialize critical range for glucose concentration in the blood    
-Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
+fprintf('---------- Measurement noise - With snack -------------- \n \n')
 
-%{
-figure(5);
-[V] = ComputeProcent(Gsc, Gcrit);
-PlotProcent(V);
-title('Preformance (measurement noise - snack)')
-%}
-%fprintf('---------- Measurement noise - With snack -------------- \n \n')
+[M, TP, Av,xTP] = MealCorrectness(Dsnack,GRID,T*min2h,1);
 
-saveas(fig1,[pwd '/Images/Noise.png']);
+subplot(414)
+plot(T*min2h, Gsc,'k-',T*min2h, xTP*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
+xlim([t0, tf]*min2h);
+ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
+ylabel({'CGM', '[mg/dL]'});
+xlabel('Time [h]');
+legend({'CGM','Predicted Meal','Actual Meal','snack'},'Position',[0.82 0.48 0.01 0.005])
+title('Figure 5.4','FontSize',16)
+
+%% Save image - measurement noise
+
+if(Days == 31)
+saveas(fig1,[pwd '/Images/Noise_31.png']);
+else
+saveas(fig1,[pwd '/Images/Noise.png']);    
+end
+
+
+
 
 
 %% Measurement noise simulation 100 Persons (no snack)  
@@ -224,7 +228,8 @@ M100 = 0;
 N100 = 0;
 Av100 = 0;
 
-figure(2);
+fig2 = figure(2);
+fig2.Position = [50 50 1340 600];
 hold on
 %{
 for j = length(Gcrit):-1:1
@@ -269,15 +274,12 @@ parfor i=1:X
     GscAv = GscAv+Gsc;
     
     [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,T*min2h);
-    x=GRID_Filter(GRID);
     
-    [M, N, Av] = MealCorrectness(D,x)
+    [M, N, Av, xTP] = MealCorrectness(D,GRID,T*min2h,0)
     
     M100 = M100+M;
     N100 = N100+N;
     Av100 = Av100+Av;
-    
-    GridAv = GridAv+x;
     
     % Plot blood glucose concentration
     plot(T*min2h, Gsc, 'Color',c(1,:));
@@ -293,6 +295,8 @@ N100 = N100;
 procent = round(N100/M100*100,2);
 Av100 = Av100/X;
 
+fprintf('---------- Measurement noise 100 patients -------------- \n \n')
+
 A = sprintf('Total number of meals: %g',M100);
 B = sprintf('Total number of founds meals: %g',N100);
 B1 = sprintf('Procent meals found: %g',procent);
@@ -302,7 +306,7 @@ disp(B)
 disp(B1)
 disp(C)
 
-plot(t,GscAv,'b-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
+plot(t,GscAv,'y-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
 xlim([t0, tf]*min2h);
 ylim([0 400])
 ylabel({'CGM', '[mg/dL]'});
@@ -310,7 +314,16 @@ xlabel('Time [h]');
 %title('Simulation 100 poeple - Measurement noise')
 hold off
 
-saveas(figure(2),[pwd '/Images/Noise100.png']);
+%% Save image - 100 patients measurement noise
+
+if(Days == 31)
+saveas(figure(2),[pwd '/Images/Noise100_31.png']);
+else
+saveas(figure(2),[pwd '/Images/Noise100.png']);   
+end
+
+
+
 
 
 %% EulerMaruyama noise Simulation 
@@ -344,7 +357,8 @@ x=GRID_Filter(GRID);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
-figure(3);
+fig3 = figure(3);
+fig3.Position = [50 50 1340 600];
 subplot(411);
 hold on
 % Plot blood glucose concentration
@@ -358,7 +372,7 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('EulerMaruyama - No snack','FontSize',14)
+title('Figure 6.1','FontSize',16)
 hold off
 
 subplot(412)
@@ -367,20 +381,16 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('Grid Algorithm on simulation','FontSize',14)
+title('Figure 6.2','FontSize',16)
 
 
 % -------------- Evaluation of simulation -------------------
 
-% Initialize critical range for glucose concentration in the blood    
-Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
+fprintf('---------- EulerMaruyama - No snack -------------- \n \n')
 
-%{
-figure(8);
-[V] = ComputeProcent(Gsc, Gcrit);
-PlotProcent(V);
-title('Preformance (Eulermaruyama noise - no snack)')
-%}
+[M, TP, Av,xTP] = MealCorrectness(D,GRID,T*min2h,1);
+
+
 
 % :_______________EulerMaruyama noise Simulation with snack
 
@@ -426,7 +436,7 @@ xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-title('EulerMaruyama - With snack','FontSize',14)
+title('Figure 6.3','FontSize',16)
 hold off
 
 subplot(414)
@@ -436,24 +446,25 @@ ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
 legend({'CGM','Predicted Meal','Actual Meal','Snack'},'Position',[0.82 0.48 0.01 0.005])
-title('Grid Algorithm on simulation','FontSize',14)
+title('Figure 6.4','FontSize',16)
+
+fprintf('---------- EulerMaruyama - With snack -------------- \n \n')
+
+[M, TP, Av,xTP] = MealCorrectness(Dsnack,GRID,T*min2h,1);
+
+%% Save image - EulerMaruyama
 
 saveas(figure(3),[pwd '/Images/EulerM.png']);
 
-% -------------- Evaluation of simulation -------------------
 
-% Initialize critical range for glucose concentration in the blood    
-Gcrit = [54.0000   70.2000  180.0000  250.2000  664.0593];
+if(Days == 31)
+saveas(figure(3),[pwd '/Images/EulerM_31.png']);
+else
+saveas(figure(3),[pwd '/Images/EulerM.png']);
+end
 
-%{
-figure(10);
-[V] = ComputeProcent(Gsc, Gcrit);
-PlotProcent(V);
-title('Preformance (Eulermaruyama noise - snack)')
 
-fprintf('---------- Eulermaruyama - With snack -------------- \n \n')
-MealCorrectness(D,x,1)
-%}
+
 
 
 %% EulerMaruyama noise simulation 100 Persons (no snack)  
@@ -477,7 +488,8 @@ M100 = 0;
 N100 = 0;
 Av100 = 0;
 
-figure(4);
+fig4 = figure(4);
+fig4.Position = [50 50 1340 600];
 hold on
 %{
 for j = length(Gcrit):-1:1
@@ -523,20 +535,19 @@ parfor i=1:X
     GscAv = GscAv+Gsc;
     
     [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,T*min2h);
-    %x=GRID_Filter(GRID);
     
-    [M, N, Av] = MealCorrectness(D,x)
+    
+    [M, N, Av, xTP] = MealCorrectness(D,x,T*min2h,0)
     
     M100 = M100+M;
     N100 = N100+N;
     Av100 = Av100+Av;
     
-    GridAv = GridAv+x;
     
     % Plot blood glucose concentration
     plot(T*min2h, Gsc, 'Color',c(1,:)); 
     plot(T*min2h, GRID*400,'r-','LineWidth',0.5);
-    yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+    %yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
     xlim([t0, tf]*min2h);
     
 end
@@ -545,6 +556,8 @@ M100 = M100;
 N100 = N100;
 procent = round(N100/M100*100,2);
 Av100 = Av100/X;
+
+fprintf('---------- EulerMaruyama 100 patients -------------- \n \n')
 
 A = sprintf('Total number of meals: %g',M100);
 B = sprintf('Total number of founds meals: %g',N100);
@@ -555,7 +568,7 @@ disp(B)
 disp(B1)
 disp(C)
 
-plot(t,GscAv,'b-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
+plot(t,GscAv,'y-'); %T*min2h,GridAv*20,'r-'); %T*min2h,x*300,'r-')
 xlim([t0, tf]*min2h);
 ylim([0 400])
 ylabel({'CGM', '[mg/dL]'});
@@ -563,6 +576,11 @@ xlabel('Time [h]');
 %title('Simulation 100 people - Eulermaruyama')
 hold off
 
+%% Save image - 100 patients EulerMaruyama
 
-saveas(figure(4),[pwd '/Images/EulerM100.png']);
+if(Days == 31)
+saveas(figure(4),[pwd '/Images/Noise100_31.png']);
+else
+saveas(figure(4),[pwd '/Images/Noise100.png']);   
+end
 

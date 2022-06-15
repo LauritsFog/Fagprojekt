@@ -93,6 +93,7 @@ RA = g2mg*D2/(VG*taum); % [(mg/dL)/min]
 f = zeros(7, 1);
 
 % Meal compartments
+%disp(d)
 f(1) =  d  - D1 /taum;
 f(2) = (D1 - D2)/taum;
 
