@@ -1,4 +1,4 @@
-function [M, TP, Av,xTP] = MealCorrectness(D,GRID,t, statement)
+function [M, TP, Av,xTP, FalsePositive] = MealCorrectness(D,GRID,t, statement)
 %MEALCORRECTNESS is a function that computes how well the GRID algorithm
 %has found meals based on the glucose concetration.
 
@@ -89,6 +89,7 @@ X1 = sprintf('------------------------------------ \n');
 %Initialize False Positive and Improved GRID filter
 FP = 0;
 xTP = x;
+FalsePositive = zeros(1,length(x));
 
 % Find number of False positive
 for i=1:length(x)
@@ -120,8 +121,9 @@ for i=1:length(x)
         if(T == 0)
             FP = FP +1;
             xTP(i) = 0;
+            FalsePositive(i) = 1;
             B = sprintf('False Positive at: %g',t(i));
-            %disp(B)
+            disp(B)
         end
 end
 
