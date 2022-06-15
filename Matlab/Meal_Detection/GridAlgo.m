@@ -55,8 +55,13 @@ end
 GRID=zeros(1,k);
 for i=3:k
     %if GF(i)>Gmin && (max((dGF(end-2:end)>Gmin3)) || max((dGF(end-1:end)>Gmin2)))
-    if GF(i)>Gmin && (max((dGF(i-2:i)>Gmin3))...
-            || max((dGF(i-1:i)>Gmin2))) 
+    LastThreeBool=dGF(i-2)>Gmin3&&dGF(i-1)>Gmin3&& dGF(i)>Gmin3;
+    LastTwoBool=dGF(i-1)>Gmin2&& dGF(i)>Gmin2;
+%     if GF(i)>Gmin && (max((dGF(i-2:i)>Gmin3))...
+%             || max((dGF(i-1:i)>Gmin2))) 
+%         GRID(i)=1;
+%     else
+    if GF(i)>Gmin && (LastThreeBool||LastTwoBool)
         GRID(i)=1;
     else
         %Not neccesary since GRID is a vector of zeros.

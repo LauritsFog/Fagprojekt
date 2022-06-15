@@ -81,7 +81,7 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 
 % Initial and final time
-days = 3;
+days = 10;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -102,7 +102,7 @@ tspan = Ts*(0:N);
 x0 = xs;
 
 % Disturbance variables with multiple meals
-Dmealplan = MealPlan(days,false)';
+Dmealplan = MealPlan(days,true)';
 
 % Select which D to use
 Duse = Dmealplan;
@@ -129,11 +129,20 @@ rampingfunction = @sigmoidRamp;
 % Time before titration begins
 tzero = (0.5*h2min)/Ts;
 
+% ctrlPar = [
+%       5.0;    % [min]     Sampling time
+%       0.05;   %           Proportional gain
+%       0.0005; %           Integral gain
+%       0.2500; %           Derivative gain
+%     108.0;    % [mg/dL]   Target blood glucose concentration
+%     us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
+
+% Controller parameters and state
 ctrlPar = [
       5.0;    % [min]     Sampling time
-      0.05;   %           Proportional gain
-      0.0005; %           Integral gain
-      0.2500; %           Derivative gain
+      0.15;   %           Proportional gain
+      0.00015; %           Integral gain
+      1; %           Derivative gain
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
 
@@ -166,15 +175,6 @@ simPID = 1;
 GscSupBolusPIDsim = mvpOutput(XSupBolusPIDsim); % [mg/dL]
 
 %% Simulation super bolus without PID sim.
-
-% % Controller parameters and state
-% ctrlPar = [
-%       5.0;    % [min]     Sampling time
-%       0.15;   %           Proportional gain
-%       0.00043429; %       Integral gain
-%       1;      %           Derivative gain
-%     108.0;    % [mg/dL]   Target blood glucose concentration
-%     us(1)];     % [mU/min]  Nominal basal rate 
 
 % Computing super bolus without PID simulation
 simPID = 0;
@@ -215,7 +215,7 @@ p3 = plot(TSupBolusPIDsim*min2h, GscSupBolusPIDsim,'Color',c(3,:));
 xlim([t0, tf]*min2h);
 ylim([0, max([GscOptBolus,GscSupBolus])*1.2]);
 ylabel({'CGM measurements', '[mg/dL]'});
-legend([p0,p1,p2,p3],'Steady state', 'Optimal bolus', 'Super bolus with CGM slope', 'Super bolus with PID sim.')
+legend([p0,p1,p2,p3],'Steady state', 'Optimal bolus', 'Super bolus using CGM signal', 'Super bolus using PID sim.')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -242,7 +242,7 @@ hold on
 stem(tspan(1:end-1)*min2h, Ts*mU2U*USupBolusPIDsim(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', '*', 'MarkerSize', 5, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
 ylim([0, 1.2*Ts*mU2U*max([max(UOptBolus(2, :)),max(USupBolus(2, :)),max(USupBolusPIDsim(2, :))])]);
-ylabel({'Bolus insulin', '[Uopen]'});
+ylabel({'Bolus insulin', '[U]'});
 xlabel('Time [h]');
 
 %% Percent visualization
@@ -257,6 +257,34 @@ title("Super bolus with CGM slope" + newline)
 subplot(1,3,3)
 PlotProcent(ComputeProcent(GscSupBolusPIDsim, Gcrit));
 title("Super bolus with PID sim." + newline)
+
+%% Bolus covariance investigation
+
+covMatrix = cov([nonzeros(UOptBolus(2,:)),nonzeros(USupBolusPIDsim(2,:)),nonzeros(USupBolus(2,:))]);
+covMatrix = round(covMatrix);
+
+figure
+scatter(Ts*mU2U*nonzeros(UOptBolus(2,:)),Ts*mU2U*nonzeros(USupBolus(2,:)),'filled')
+xlabel("Bolus size with optimal bolus [U]")
+ylabel("Bolus size with super bolus using CGM signal [U]")
+
+figure
+scatter(Ts*mU2U*nonzeros(USupBolusPIDsim(2,:)),Ts*mU2U*nonzeros(USupBolus(2,:)),'filled')
+xlabel("Bolus size with super bolus using PID sim. [U]")
+ylabel("Bolus size with super bolus using CGM signal [U]")
+
+% figure
+% plot(tspan(1:100),NoiseSpikeFilter(UOptBolus(1,81:180)+randn(1,100),3))
+% 
+% Utemp = UOptBolus(1,81:180)+randn(1,100);
+% 
+% NoiseTemp = NoiseSpikeFilter(Utemp,15);
+% 
+% figure
+% plot(tspan(1:100),lowpassfilter(NoiseTemp,5,6,100))
+% 
+% figure
+% plot(tspan(1:100),UOptBolus(1,81:180)+randn(1,100))
 
 %% Simulation optimal bolus standard PID
 
@@ -280,9 +308,20 @@ GscOptBolusStan = mvpOutput(XOptBolusStan); % [mg/dL]
 % Blood glucose concentration
 GscOptBolus = mvpOutput(XOptBolus); % [mg/dL]
 
+%% Simulation optimal bolus sup PID
+
+[TOptBolusSup, XOptBolusSup, YOptBolusSup, UOptBolusSup] = closedLoopSimulationOptBolus(x0, tspan, Duse, p, ...
+    simModel, observationModel, @pidControllerSupBolus, ...
+    ctrlPar, ctrlState, simMethod, tzero, haltingiter, ...
+    ubo0, idxbo, scalingFactor, objectiveFunction, ...
+    outputModel, rampingfunction, opts);
+
+% Blood glucose concentration
+GscOptBolusSup = mvpOutput(XOptBolusSup); % [mg/dL]
+
 %% Visualization
 
-c = copper(2);
+c = copper(3);
 
 % Setting critical intervals and interval colors
 Gcrit = [3,3.9,10,13.9,2*13.9]*mmolL2mgdL;
@@ -302,10 +341,12 @@ hold on
 p1 = plot(TOptBolusStan*min2h, GscOptBolusStan,'Color',c(1,:));
 hold on
 p2 = plot(TOptBolus*min2h, GscOptBolus,'Color',c(2,:));
+hold on
+p3 = plot(TOptBolusSup*min2h, GscOptBolusSup,'Color',c(3,:));
 xlim([t0, tf]*min2h);
 ylim([0, max([GscOptBolusStan,GscOptBolus])*1.2]);
 ylabel({'CGM measurements', '[mg/dL]'});
-legend([p0,p1,p2],'Steady state', 'Optimal bolus with standard PID', 'Optimal bolus with integration halt')
+legend([p0,p1,p2,p3],'Steady state', 'Optimal bolus with standard PID', 'Optimal bolus with integration halt','Optimal bolus with basal halt')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -318,6 +359,8 @@ subplot(413);
 stairs(tspan*min2h, UOptBolusStan(1, [1:end, end]),'LineWidth', 2.5,'Color',c(1,:));
 hold on
 stairs(tspan*min2h, UOptBolus(1, [1:end, end]),'LineWidth', 2.5,'Color',c(2,:));
+hold on
+stairs(tspan*min2h, UOptBolusSup(1, [1:end, end]),'LineWidth', 2.5,'Color',c(3,:));
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
@@ -325,18 +368,23 @@ ylabel({'Basal insulin', '[mU/min]'});
 subplot(414);
 stem(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolusStan(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 'o', 'MarkerSize', 5, 'Color', c(1,:));
 hold on
-stem(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 's', 'MarkerSize', 5, 'Color', c(2,:));
+stem(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolus(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 'd', 'MarkerSize', 5, 'Color', c(2,:));
+hold on
+stem(tspan(1:end-1)*min2h, Ts*mU2U*UOptBolusSup(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', '*', 'MarkerSize', 5, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
-ylim([0, 1.2*Ts*mU2U*max([max(UOptBolusStan(2, :)),max(UOptBolus(2, :))])]);
-ylabel({'Bolus insulin', '[Uopen]'});
+ylim([0, 1.2*Ts*mU2U*max([max(UOptBolusStan(2, :)),max(UOptBolus(2, :)),max(UOptBolusSup(2, :))])]);
+ylabel({'Bolus insulin', '[U]'});
 xlabel('Time [h]');
 
 %% Percent visualization
 
 figure
-subplot(1,2,1)
+subplot(1,3,1)
 PlotProcent(ComputeProcent(GscOptBolusStan, Gcrit));
 title("Optimal bolus with standard PID" + newline)
-subplot(1,2,2)
+subplot(1,3,2)
 PlotProcent(ComputeProcent(GscOptBolus, Gcrit));
 title("Optimal bolus with integration halt" + newline)
+subplot(1,3,3)
+PlotProcent(ComputeProcent(GscOptBolusSup, Gcrit));
+title("Optimal bolus with basal halt" + newline)

@@ -5,8 +5,8 @@
 
 %% Init
 loadLib();
-addpath('/Users/frederiknagel/Desktop/RealCGMData_DO_NOT_SHARE')
-
+%addpath('/Users/frederiknagel/Desktop/RealCGMData_DO_NOT_SHARE')
+addpath('G:\My Drive\Dtu\4 Semester\Fagprojekt')
 Days = 3;
 InitData();
 
@@ -53,7 +53,7 @@ end
 
 dg=3;
 dt=1;
-[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+[GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,[],t);
 
 figure(4);
 subplot(211)
@@ -78,6 +78,23 @@ legend({'CGM','Predicted Meal','Actual Meal'},'Position',[0.82 0.50 0.01 0.005])
 
 %%
 saveas(figure(4),[pwd '/Images/RealDataGRID.png']);
+
+%%
+
+tiledlayout(2,1)
+% First plot
+ax1 = nexttile;
+plot(tspan,Gsc,'k',tspan,dGF,'b')
+ylabel('CGM [mg/dL]')
+
+% Second plot
+ax2 = nexttile;
+plot(tspan,dGF,'b',tspan,correctMeal*150,'g-')
+title("Approximation G_F'")
+xlabel('Time [min]')
+ylabel("CGM' [mg/dl min]")
+
+
 
 
 %%

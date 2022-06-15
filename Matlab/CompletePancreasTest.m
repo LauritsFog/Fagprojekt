@@ -81,7 +81,7 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 
 % Initial and final time
-days = 10;
+days = 5;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -102,7 +102,7 @@ tspan = Ts*(0:N);
 x0 = xs;
 
 % Disturbance variables with multiple meals
-Dmealplan = MealPlan(days,false)';
+Dmealplan = MealPlan(days,true)';
 
 % Select which D to use
 Duse = Dmealplan;
@@ -115,21 +115,37 @@ idxbo = 2;
 
 % Controller parameters and state
 % With super bolus
+% ctrlPar = [
+%       5.0;    % [min]     Sampling time
+%       0;   %           Proportional gain
+%       0.0001; %           Integral gain
+%       0.35; %           Derivative gain
+%     108.0;    % [mg/dL]   Target blood glucose concentration
+%     us(1)];     % [mU/min]  Nominal basal rate 
+
 ctrlPar = [
       5.0;    % [min]     Sampling time
       0;   %           Proportional gain
-      0.0001; %           Integral gain
-      0.35; %           Derivative gain
+      0; %           Integral gain
+      15; %           Derivative gain
     108.0;    % [mg/dL]   Target blood glucose concentration
-    us(1)];     % [mU/min]  Nominal basal rate 
+    us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
+
+% ctrlPar = [
+%       5.0;    % [min]     Sampling time
+%       0.15;   %           Proportional gain
+%       0.00015; %           Integral gain
+%       0.5; %           Derivative gain
+%     108.0;    % [mg/dL]   Target blood glucose concentration
+%     us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
 
 % 0.05;   %           Proportional gain
 % 0.0005; %           Integral gain
 % 0.2500; %           Derivative gain
 
 % Parameters for grid algorithm
-dg = 8;
-dt = 1;
+dg = 15;
+dt = 5;
 gridTime = 3*h2min/Ts;
 
 % Ramping function
@@ -195,7 +211,7 @@ subplot(414);
 stem(tspan(1:end-1)*min2h, Ts*mU2U*U(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 'o', 'MarkerSize', 4, 'Color', c(1,:));
 xlim([t0, tf]*min2h);
 ylim([0, 1.2*Ts*mU2U*max(U(2, :))+1]);
-ylabel({'Bolus insulin', '[Uopen]'});
+ylabel({'Bolus insulin', '[U]'});
 xlabel('Time [h]');
 
 %% Percent visualization

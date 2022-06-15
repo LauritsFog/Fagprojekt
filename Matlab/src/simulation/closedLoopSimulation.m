@@ -116,7 +116,7 @@ for k = 1:N
     
     % Compute manipulated inputs
     [uk, ctrlStatekp1] = ctrlAlgorithm(tk, yk, dk, ctrlPar, ctrlStatek);
-    
+
     % Time interval
     tspank = linspace(tk, tkp1, Nk+1);
     

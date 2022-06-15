@@ -1,6 +1,8 @@
-function [U] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, N, tzero, haltingiter, rampingfunction)
+function [U, Y] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, N, tzero, haltingiter, rampingfunction)
     
     U = zeros(2,N);
+    Y = zeros(1,N);
+    Y(1) = yk;
     
     Ts = ctrlPar(1);
     
@@ -32,6 +34,7 @@ function [U] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgor
 
         % Store solution
         U(:, k) = uk;
+        Y(:, k+1) = ykp1;
         ctrlStatek = ctrlStatekp1;
 
         % Update initial condition

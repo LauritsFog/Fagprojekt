@@ -46,8 +46,8 @@ mU2U  = 1/U2mU;  % Convert from mU  to Uopen
 ctrlAlgorithm = @pidController;
 
 % Simulation model
-simModel = @mvpModel;
-% simModel = @mvpNoise;
+% simModel = @mvpModel;
+simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -56,8 +56,8 @@ outputModel = @mvpOutput;
 observationModel = @(t, x, p) x(7);
 
 % Simulation method/function
-simMethod = @odeEulersExplicitMethodFixedStepSize;
-% simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+% simMethod = @odeEulersExplicitMethodFixedStepSize;
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 % Controller parameters and state
 % ctrlPar = [
@@ -72,8 +72,8 @@ simMethod = @odeEulersExplicitMethodFixedStepSize;
 ctrlPar = [
       5.0;    % [min]     Sampling time
       0.15;   %           Proportional gain
-      0.0003; %           Integral gain
-      0.5; %           Derivative gain
+      0.00015; %           Integral gain
+      1; %           Derivative gain
     108.0;    % [mg/dL]   Target blood glucose concentration
     NaN];     % [mU/min]  Nominal basal rate (overwritten below)
 
@@ -103,7 +103,7 @@ objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 ctrlPar(6) = us(1);
 
 % Initial and final time
-days = 3;
+days = 4;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -130,7 +130,7 @@ Uopen = repmat(us, 1, N);
 D = zeros(1, N);
 
 % Disturbance variables with multiple meals
-Dmealplan = MealPlan(days,false)';
+Dmealplan = MealPlan(days,true)';
 
 % Select which D to use
 Duse = Dmealplan;
@@ -223,7 +223,7 @@ subplot(414);
 stem(tspan(1:end-1)*min2h, Ts*mU2U*Uopenbolus(2, :),'filled','LineStyle','-','LineWidth', 1,'Marker', 's', 'MarkerSize', 5, 'Color', c(3,:));
 xlim([t0, tf]*min2h);
 ylim([0, 1.2*max(Ts*mU2U*Uopenbolus(2, :))]);
-ylabel({'Bolus insulin', '[Uopen]'});
+ylabel({'Bolus insulin', '[U]'});
 xlabel('Time [h]');
 
 %% Percent plot

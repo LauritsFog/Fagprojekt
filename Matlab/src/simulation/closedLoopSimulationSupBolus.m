@@ -110,7 +110,13 @@ xk = x0;
 yk = y0;
 
 % bolus scalar
-beta = 2;
+alpha = 0.2;
+beta = 0.5;
+gamma = 0.1;
+
+% Parameters for lowpassfilter
+dtlowpass = 3;
+tau = 6;
 
 for k = 1:N
     % Times
@@ -128,17 +134,25 @@ for k = 1:N
         tpause = haltingiter;
 
         if k > gridTime
-            [~,dGF,~]=GridAlgo(Y(k-gridTime:k),dg,dt,[],tspan(k-gridTime:k));
+            % [~,Ytemp] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, 8, tzero, haltingiter, rampingfunction);
+            
+            % dY = Ytemp(2:end)-Ytemp(1:end-1);
+
+            Ylowpass = lowpassfilter(Y(k-gridTime),dtlowpass,tau,gridTime);
+
+            dYlowpass = Ylowpass(2:end)-Ylowpass(1:end-1);
+
+            dYmean = mean(dYlowpass);
         end
         
         if simPID == 1
-            Ubolus = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, @pidController, simModel, simMethod, observationModel, haltingiter, tzero, haltingiter, rampingfunction);
+            [Ubolus,~] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, @pidController, simModel, simMethod, observationModel, haltingiter, tzero, haltingiter, rampingfunction);
             
             % plot(linspace(1,length(Ubolus),length(Ubolus)),Ubolus);
             
             ubok = sum(Ubolus(1,:));
         else
-            ubok = beta*uk(1)*haltingiter*max([0,1+mean(dGF(end-6:end))]);
+            ubok = alpha*Ylowpass(end)*haltingiter*max([0,beta+gamma*dYmean]);
         end
         
     else

@@ -122,11 +122,14 @@ mealMethod = 0;
 % Minimim meal sizes allowed
 minMeal = 0.3;
 
-% tpause scalar
-alpha = 1;
-
 % bolus scalar
-beta = 0.7;
+alpha = 0.2;
+beta = 0.5;
+gamma = 0.1;
+
+% Parameters for lowpassfilter
+dtlowpass = 3;
+tau = 6;
 
 for k = 1:N
     % Times
@@ -141,7 +144,7 @@ for k = 1:N
     % Detecting meals
     if mealMethod == 0 % Using grid algo
         if k > gridTime
-            [~,dGF,GRID]=GridAlgo(Y(k-gridTime:k),dg,dt,[],tspan(k-gridTime:k));
+            [~,~,GRID]=GridAlgo(Y(k-gridTime:k),dg,dt,[],tspan(k-gridTime:k));
         end
 
         % If meal is detected and no meal has been detected for in past
@@ -157,11 +160,15 @@ for k = 1:N
         % If meal is detected, halt integration for some iterations and compute
         % optimal bolus
         if dkest ~= 0
-            % tpause = round(alpha*haltingiter*(1+mean(dGF(end-6:end))));
+            Ylowpass = lowpassfilter(Y(k-gridTime:k),dtlowpass,tau,gridTime);
+
+            dYlowpass = Ylowpass(2:end)-Ylowpass(1:end-1);
+
+            dYmean = mean(dYlowpass);
+
             tpause = haltingiter;
             
-            ubok = beta*uk(1)*haltingiter*max([0,1+mean(dGF(end-6:end))]);
-            % ubok = uk(1)*haltingiter;
+            ubok = alpha*Ylowpass(end)*haltingiter*max([0,beta+gamma*dYmean]);
         else
             ubok = 0;
         end
