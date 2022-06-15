@@ -47,7 +47,7 @@ end
 simModel = @mvpModel;
 
 % Halting iterations used in PID controller
-haltinghours = 2;
+haltinghours = 3;
 haltingiter = haltinghours*h2min/Ts;
 
 % Control algorithm
@@ -56,8 +56,8 @@ ctrlAlgorithm = @pidControllerSupBolus;
 % Closed-loop simulation
 [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-    rampingfunction, dg, dt, gridTime, opts);
+    ctrlParFinal, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime,mealTime, opts);
 
 % Blood glucose concentration
 Gsc = mvpOutput(X,Noise); % [mg/dL]
@@ -80,7 +80,7 @@ for i = length(Gcrit):-1:1
     hold on
 end
 plot(T*min2h, Gsc, 'Color',c(1,:)); 
-yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+yline(ctrlParFinal(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
@@ -112,7 +112,7 @@ fprintf('---------- Measurement noise - No snack -------------- \n \n')
 simModel = @mvpModel;
 
 % Halting iterations used in PID controller
-haltinghours = 2;
+haltinghours = 3;
 haltingiter = haltinghours*h2min/Ts;
 
 % Control algorithm
@@ -121,8 +121,8 @@ ctrlAlgorithm = @pidControllerSupBolus;
 % Closed-loop simulation
 [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Dsnack, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-    rampingfunction, dg, dt, gridTime, opts);
+    ctrlParFinal, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime,mealTime, opts);
 
 % Blood glucose concentration
 Gsc = mvpOutput(X,Noise); % [mg/dL]
@@ -131,7 +131,7 @@ Gsc = mvpOutput(X,Noise); % [mg/dL]
 
 t = T*min2h;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
-[xTP xFP]=GRID_Filter(D,GRID,t);
+[xTP xFP]=GRID_Filter(Dsnack,GRID,t);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
@@ -144,7 +144,7 @@ for i = length(Gcrit):-1:1
     hold on
 end
 plot(T*min2h, Gsc, 'Color',c(1,:)); 
-yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+yline(ctrlParFinal(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
@@ -164,8 +164,7 @@ title('Figure 5.2','FontSize',16)
 
 fprintf('---------- Measurement noise - With snack -------------- \n \n')
 
-[M, TP, Av] = MealCorrectness(D,GRID,t, 1);
-
+[M, TP, Av] = MealCorrectness(Dsnack,GRID,t, 1);
 
 %% Save image - measurement noise
 
@@ -183,7 +182,7 @@ end
 
 simModel = @mvpModel;
 % Halting iterations used in PID controller
-haltinghours = 2;
+haltinghours = 3;
 haltingiter = haltinghours*h2min/Ts;
 
 % Control algorithm
@@ -218,7 +217,7 @@ parfor i=1:X
     [xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
     
     % Control parameters
-    ctrlParComplete = [
+    ctrlParFinal = [
       5.0;    % [min]     Sampling time
       0.05;   %           Proportional gain
       0.00005; %           Integral gain
@@ -226,7 +225,7 @@ parfor i=1:X
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];
     
-    ctrlParComplete(6) = us(1);
+    ctrlParFinal(6) = us(1);
     x0 = xs;
     
     % Creates new mealplan
@@ -236,8 +235,8 @@ parfor i=1:X
     % -------------------Simulation-------------------
     [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-    rampingfunction, dg, dt, gridTime, opts);
+    ctrlParFinal, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime, mealTime, opts);
 
     % Blood glucose concentration
     Gsc = mvpOutput(X,Noise); % [mg/dL]
@@ -246,7 +245,7 @@ parfor i=1:X
     
     [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,T*min2h);
     
-    [M, N, Av, xTP] = MealCorrectness(D,GRID,T*min2h,0)
+    [M, N, Av] = MealCorrectness(D,GRID,T*min2h,0)
     
     M100 = M100+M;
     N100 = N100+N;
@@ -255,7 +254,7 @@ parfor i=1:X
     % Plot blood glucose concentration
     plot(T*min2h, Gsc, 'Color',c(1,:));
     plot(T*min2h, GRID*400,'r-','LineWidth',0.5);
-    %yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+    %yline(ctrlParFinal(5),'LineWidth',1.2,'Color','r','LineStyle','--');
     xlim([t0, tf]*min2h);
     
 end
@@ -305,7 +304,7 @@ simModel = @mvpNoise;
 simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 % Halting iterations used in PID controller
-haltinghours = 2;
+haltinghours = 3;
 haltingiter = haltinghours*h2min/Ts;
 
 % Control algorithm
@@ -314,8 +313,8 @@ ctrlAlgorithm = @pidControllerSupBolus;
 % Closed-loop simulation
 [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-    rampingfunction, dg, dt, gridTime, opts);
+    ctrlParFinal, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime,mealTime, opts);
 
 % Blood glucose concentration
 Gsc = mvpOutput(X,Noise); % [mg/dL]
@@ -324,7 +323,7 @@ Gsc = mvpOutput(X,Noise); % [mg/dL]
 
 t = T*min2h;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
-x=GRID_Filter(GRID);
+[xTP, xFP]=GRID_Filter(D,GRID,t);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
@@ -338,7 +337,7 @@ for i = length(Gcrit):-1:1
     hold on
 end
 plot(T*min2h, Gsc, 'Color',c(1,:)); 
-yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+yline(ctrlParFinal(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
@@ -347,7 +346,7 @@ title('Figure 6.1','FontSize',16)
 hold off
 
 subplot(412)
-plot(T*min2h, Gsc,'k-',T*min2h, GRID*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
+plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-', t, xFP*max(Gsc)*1.1,'b-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
@@ -359,7 +358,7 @@ title('Figure 6.2','FontSize',16)
 
 fprintf('---------- EulerMaruyama - No snack -------------- \n \n')
 
-[M, TP, Av,xTP] = MealCorrectness(D,GRID,T*min2h,1);
+[M, TP, Av] = MealCorrectness(D,GRID,T*min2h,1);
 
 
 
@@ -371,7 +370,7 @@ simModel = @mvpNoise;
 simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 % Halting iterations used in PID controller
-haltinghours = 2;
+haltinghours = 3;
 haltingiter = haltinghours*h2min/Ts;
 
 % Control algorithm
@@ -380,8 +379,8 @@ ctrlAlgorithm = @pidControllerSupBolus;
 % Closed-loop simulation
 [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Dsnack, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-    rampingfunction, dg, dt, gridTime, opts);
+    ctrlParFinal, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime,mealTime, opts);
 
 % Blood glucose concentration
 Gsc = mvpOutput(X,Noise); % [mg/dL]
@@ -390,7 +389,7 @@ Gsc = mvpOutput(X,Noise); % [mg/dL]
 
 t = T*min2h;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
-x=GRID_Filter(GRID);
+[xTP, xFP]=GRID_Filter(Dsnack,GRID,t);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
@@ -402,7 +401,7 @@ for i = length(Gcrit):-1:1
     hold on
 end
 plot(T*min2h, Gsc, 'Color',c(1,:)); 
-yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+yline(ctrlParFinal(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
@@ -411,7 +410,7 @@ title('Figure 6.3','FontSize',16)
 hold off
 
 subplot(414)
-plot(T*min2h, Gsc,'k-',T*min2h, GRID*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
+plot(T*min2h, Gsc,'k-',T*min2h, xTP*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-',T*min2h,xFP*max(Gsc)*1.1,'b-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
@@ -421,7 +420,7 @@ title('Figure 6.4','FontSize',16)
 
 fprintf('---------- EulerMaruyama - With snack -------------- \n \n')
 
-[M, TP, Av,xTP] = MealCorrectness(Dsnack,GRID,T*min2h,1);
+[M, TP, Av] = MealCorrectness(Dsnack,GRID,T*min2h,1);
 
 %% Save image - EulerMaruyama
 
@@ -443,7 +442,7 @@ end
 simModel = @mvpNoise;
 simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 % Halting iterations used in PID controller
-haltinghours = 2;
+haltinghours = 3;
 haltingiter = haltinghours*h2min/Ts;
 
 % Control algorithm
@@ -478,7 +477,7 @@ parfor i=1:X
     [xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
     
     % Control parameters
-    ctrlParComplete = [
+    ctrlParFinal = [
       5.0;    % [min]     Sampling time
       0.05;   %           Proportional gain
       0.00005; %           Integral gain
@@ -486,7 +485,7 @@ parfor i=1:X
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];
     
-    ctrlParComplete(6) = us(1);
+    ctrlParFinal(6) = us(1);
     x0 = xs;
     
     % Creates new mealplan
@@ -497,8 +496,8 @@ parfor i=1:X
     % Closed-loop simulation
     [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlParComplete, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-    rampingfunction, dg, dt, gridTime, opts);
+    ctrlParFinal, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime,mealTime, opts);
 
     % Blood glucose concentration
     Gsc = mvpOutput(X,Noise); % [mg/dL]
@@ -508,7 +507,7 @@ parfor i=1:X
     [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,T*min2h);
     
     
-    [M, N, Av, xTP] = MealCorrectness(D,x,T*min2h,0)
+    [M, N, Av] = MealCorrectness(D,GRID,T*min2h,0)
     
     M100 = M100+M;
     N100 = N100+N;
@@ -518,7 +517,7 @@ parfor i=1:X
     % Plot blood glucose concentration
     plot(T*min2h, Gsc, 'Color',c(1,:)); 
     plot(T*min2h, GRID*400,'r-','LineWidth',0.5);
-    %yline(ctrlParComplete(5),'LineWidth',1.2,'Color','r','LineStyle','--');
+    %yline(ctrlParFinal(5),'LineWidth',1.2,'Color','r','LineStyle','--');
     xlim([t0, tf]*min2h);
     
 end

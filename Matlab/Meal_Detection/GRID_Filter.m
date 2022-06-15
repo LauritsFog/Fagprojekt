@@ -22,6 +22,27 @@ for i=1:length(GRID)
                 break;
             end
             
+            % If there is a 30min gap between two meals, its merged as one
+            % meal
+           if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 0 && GRID(i+j+4) == 0 && GRID(i+j+5) == 0 && GRID(i+j+6) == 0 && GRID(i+j+7) == 1)
+              GRID(i+j+1) = 1;
+              GRID(i+j+2) = 1;
+              GRID(i+j+3) = 1;
+              GRID(i+j+4) = 1;
+              GRID(i+j+5) = 1;
+              GRID(i+j+6) = 1;
+           end
+            
+            % If there is a 25min gap between two meals, its merged as one
+            % meal
+           if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 0 && GRID(i+j+4) == 0 && GRID(i+j+5) == 0 && GRID(i+j+6) == 1)
+              GRID(i+j+1) = 1;
+              GRID(i+j+2) = 1;
+              GRID(i+j+3) = 1;
+              GRID(i+j+4) = 1;
+              GRID(i+j+5) = 1;
+           end
+            
             % If there is a 20min gap between two meals, its merged as one
             % meal
            if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 0 && GRID(i+j+4) == 0 && GRID(i+j+5) == 1)

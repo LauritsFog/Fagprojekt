@@ -124,6 +124,8 @@ ctrlAlgorithm = @pidControllerSupBolus;
 % Ramping function
 rampingfunction = @sigmoidRamp;
 
+mealTime = 2.5*h2min/Ts;
+
 % Time before titration begins
 tzero = 0;
 
@@ -160,6 +162,24 @@ ctrlParComplete = [
       0.05;   %           Proportional gain
       0.00005; %           Integral gain
       0.5; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate 
+
+% Controller parameters complete
+ctrlParComplete = [
+      5.0;    % [min]     Sampling time
+      0.05;   %           Proportional gain
+      0.00005; %           Integral gain
+      0.5; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate 
+
+% Controller parameters complete
+ctrlParFinal = [
+      5.0;    % [min]     Sampling time
+      0;   %           Proportional gain
+      0.00021; %           Integral gain
+      5; %           Derivative gain
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];     % [mU/min]  Nominal basal rate 
 
