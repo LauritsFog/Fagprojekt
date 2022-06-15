@@ -93,9 +93,12 @@ x=zeros(1,length(GRID));
 x([locationsOfMeal])=1;
 % fjernet +10
 
+
+
+
 %% Splits meals into True positive and False positive
 
-xTP = zeros(1,length(x));
+xTP = x;
 xFP = zeros(1,length(x));
 
 
@@ -106,7 +109,7 @@ for i=1:length(x)
         T = 0;
         
         % For-loop for detecting if meal is a false postitive
-        for j = 1:33 
+        for j = 1:30 
 
             % Out of bound fix
             if i+j==length(x)
@@ -127,7 +130,7 @@ for i=1:length(x)
         % If no meal is found its a false postitive
         if(T == 0)
             xTP(i) = 0;
-            FP(i) = 1;
+            xFP(i) = 1;
             B = sprintf('False Positive at: %g',t(i));
             %disp(B)
         end

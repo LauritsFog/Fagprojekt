@@ -89,7 +89,7 @@ title('Figure 5.1','FontSize',16)
 hold off
 
 subplot(412)
-plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-', t, FP*max(Gsc)*1.1,'b-')
+plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-', t, xFP*max(Gsc)*1.1,'b-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
@@ -100,7 +100,7 @@ title('Figure 5.2','FontSize',16)
 
 fprintf('---------- Measurement noise - No snack -------------- \n \n')
 
-[M, TP, Av,xTP, FP] = MealCorrectness(D,GRID,T*min2h,1);
+[M, TP, Av] = MealCorrectness(D,GRID,t, 1);
 
 
 
@@ -152,8 +152,8 @@ xlabel('Time [h]');
 title('Figure 5.3','FontSize',16)
 hold off
 
-subplot(412)
-plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-', t, FP*max(Gsc)*1.1,'b-')
+subplot(414)
+plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-',t,correctSnack*max(Gsc)*1.1,'y-', t, xFP*max(Gsc)*1.1,'b-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
@@ -164,7 +164,7 @@ title('Figure 5.2','FontSize',16)
 
 fprintf('---------- Measurement noise - With snack -------------- \n \n')
 
-[M, TP, Av,xTP, FP] = MealCorrectness(D,GRID,T*min2h,1);
+[M, TP, Av] = MealCorrectness(D,GRID,t, 1);
 
 
 %% Save image - measurement noise

@@ -1,4 +1,4 @@
-function [M, TP, Av,xTP, FalsePositive] = MealCorrectness(D,GRID,t, statement)
+function [M, TP, Av] = MealCorrectness(D,GRID, t, statement)
 %MEALCORRECTNESS is a function that computes how well the GRID algorithm
 %has found meals based on the glucose concetration.
 
@@ -11,74 +11,9 @@ function [M, TP, Av,xTP, FalsePositive] = MealCorrectness(D,GRID,t, statement)
 % --------- Update GRID Algorithm ------------
 
 % Splits up a meal detected as one, but are actually two
-for i=1:length(GRID)
-   
-    if(GRID(i) == 1) % Identifies when a meal is predicted
-        j = 0;
-        while(GRID(i+j)==1) % As long as the next index in the GRID oiutput is 1 this whileloop is going
-           
-            if(i+j+5 >= length(GRID)) % Makes sure we dont go out of bound
-                break;
-            end
-            
-            % If there is a 20min gap between two meals, its merged as one
-            % meal
-           if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 0 && GRID(i+j+4) == 0 && GRID(i+j+5) == 1)
-              GRID(i+j+1) = 1;
-              GRID(i+j+2) = 1;
-              GRID(i+j+3) = 1;
-              GRID(i+j+4) = 1;
-           end
 
-           % If there is a 15min gap between two meals, its merged as one
-            % meal
-           if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 0 && GRID(i+j+4) == 1)
-              GRID(i+j+1) = 1;
-              GRID(i+j+2) = 1;
-              GRID(i+j+3) = 1;
-           end
-            
-           % If there is a 10min gap between two meals, its merged as one
-            % meal
-           if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 1)
-              GRID(i+j+1) = 1;
-              GRID(i+j+2) = 1;
-           end
-           
-           % If there is a 5min gap between two meals, its merged as one
-            % meal
-           if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 1 )
-              GRID(i+j+1) = 1;
-           end
-           
-           % makes sure we dont go out of bound
-           if(i+j-2 == 0)
-               break;
-           end
-            
-           % If there is an actual meal inside a row of 1's in the GRID
-           % algorithm, it splits up the meal in two and makes some space
-           
-           if(D(i+j)>0)
-               GRID(i+j-1) = 0;
-               GRID(i+j-2) = 0;
-               
-               GRID(i+j) = 0;
-               GRID(i+j+1) = 0;
-               GRID(i+j+2) = 0;
-               GRID(i+j+3) = 0;
-               GRID(i+j+4) = 0;
-           end
-           
-           % update value
-           j = j+1;
- 
-        end 
-    end
-    
-end
-% apply GRID FIlter to the updated GRID output
-x=GRID_Filter(GRID);
+
+[xTP, xFP] = GRID_Filter(D,GRID,t);
 
 
 X1 = sprintf('------------------------------------ \n');
@@ -86,52 +21,9 @@ X1 = sprintf('------------------------------------ \n');
 
 % --------- number of found meals ------------
 
-%Initialize False Positive and Improved GRID filter
-FP = 0;
-xTP = x;
-FalsePositive = zeros(1,length(x));
-
-% Find number of False positive
-for i=1:length(x)
-   
-    % Start if there is a predicted meal from the GRID_filter output
-    if(x(i) == 1)
-        T = 0;
-        
-        % For-loop for detecting if meal is a false postitive
-        for j = 1:33 
-
-            % Out of bound fix
-            if i+j==length(x)
-            break
-            end
-            if i-j==0
-            break
-            end
-            
-            % for each step checks if a real meal is within the timeinteval
-            if(D(i+round(j/6)) > 0 || D(i-j)>0)
-                T = 1;
-                break;
-            end
-               
-        end
-    
-        % If no meal is found its a false postitive
-        if(T == 0)
-            FP = FP +1;
-            xTP(i) = 0;
-            FalsePositive(i) = 1;
-            B = sprintf('False Positive at: %g',t(i));
-            disp(B)
-        end
-end
-
-end
-
-
-N = nnz(x); % finds number of predicted meals
-TP = N - FP;
+N = nnz(xTP)+nnz(xFP); % finds number of predicted meals
+TP = nnz(xTP);
+FP = nnz(xFP);
 
 % --------- Basic info about mealplan and predicted meals ------------
 

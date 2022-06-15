@@ -1146,11 +1146,11 @@ legend('Procent found within 1 hour','Average time taken to find meal')
 
 % This is done in the function called mvpNoise
 
-%simModel = @mvpModel;
+simModel = @mvpModel;
 
-simModel = @mvpNoise;
+%simModel = @mvpNoise;
 
-simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+%simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 % Halting iterations used in PID controller
 haltinghours = 2;
@@ -1173,15 +1173,21 @@ dg=15;
 dt=5;
 t = T*min2h;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
+GridOLD = GRID;
+B=[0,1];
+locationsOfMeal=strfind(GridOLD,B);
+x=zeros(1,length(GridOLD));
+% Adding 10 to get the position of the first 1. 
+%(Just the number of 0 in the B vector before the first 1)
+x([locationsOfMeal])=1;
 
+[xTP, xFP]=GRID_Filter(D,GRID,t);
 % Forsøg på at opdele steder hvor den har fundet et meal, men det er
 % faktisk to
 
-[M, N, Av, xTP, FP] = MealCorrectness(D,GRID,t,1);
-
 fig1 = figure(1);
 fig1.Position = [300 550 1740 600];
-subplot(2,1,1)
+subplot(3,1,1)
 plot(T*min2h, Gsc,'k-',t,GRID*300,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
 yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
@@ -1189,8 +1195,16 @@ ylabel({'CGM measurements', '[mg/dL]'});
 xlabel('Time [h]');
 title('Normal GRID')
 
-subplot(212)
-plot(T*min2h, Gsc,'k-',t,xTP*350,'r-',t,correctMeal*350,'g-', t,FP*350,'b-') %,t,correctSnack,'y-')
+subplot(312)
+plot(T*min2h, Gsc,'k-',t,correctMeal*350,'g-', t, x*350,'r-') %,t,correctSnack,'y-')
+yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
+xlim([t0, tf]*min2h);
+ylabel({'CGM measurements', '[mg/dL]'});
+xlabel('Time [h]');
+title('Normal GRID Filter')
+
+subplot(313)
+plot(T*min2h, Gsc,'k-',t,xTP*350,'r-',t,correctMeal*350,'g-', t, xFP*350,'b-') %,t,correctSnack,'y-')
 yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
@@ -1198,3 +1212,4 @@ xlabel('Time [h]');
 title('Improved GRID Filter on GRID')
 
 
+[M, TP, Av] = MealCorrectness(D,GRID,t, 1);
