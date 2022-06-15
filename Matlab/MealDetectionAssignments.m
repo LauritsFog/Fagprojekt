@@ -3,7 +3,7 @@ clear; clc; clear all;
 % Function that initializes the data, and loads the functions used.
 loadLib();
 
-Days = 3;Noise = 5;
+Days = 4;Noise = 9;
 InitData();
 
 D = MealPlan(Days,1)';
@@ -1177,12 +1177,12 @@ t = T*min2h;
 % Forsøg på at opdele steder hvor den har fundet et meal, men det er
 % faktisk to
 
-[M, N, Av, xTP] = MealCorrectness(D,GRID,t,1);
+[M, N, Av, xTP, FP] = MealCorrectness(D,GRID,t,1);
 
 fig1 = figure(1);
 fig1.Position = [300 550 1740 600];
 subplot(2,1,1)
-plot(T*min2h, Gsc,'b-',t,GRID*300,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
+plot(T*min2h, Gsc,'k-',t,GRID*300,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
 yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});
@@ -1190,7 +1190,7 @@ xlabel('Time [h]');
 title('Normal GRID')
 
 subplot(212)
-plot(T*min2h, Gsc,'b-',t,xTP*350,'r-',t,correctMeal*350,'g-') %,t,correctSnack,'y-')
+plot(T*min2h, Gsc,'k-',t,xTP*350,'r-',t,correctMeal*350,'g-', t,FP*350,'b-') %,t,correctSnack,'y-')
 yline(130,'LineWidth',1.2,'Color','k','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylabel({'CGM measurements', '[mg/dL]'});

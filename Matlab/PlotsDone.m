@@ -4,25 +4,18 @@ clear; clear all;
 loadLib();
 clc;
 
-Days = 3;
+Days = 4;
 InitData();
 
 % Noise Level
-Noise = 5;
-dg= 6;
-dt=2;
+Noise = 9;
+dg= 15;
+dt=5;
 
 fs = 14;
 
-if(Days == 3)
-load('TheOneAndOnlyMealPlanAndParameters.mat')
-end
-
-if(Days == 31)
 p = CreatePerson;
 Dsnack = MealPlan(Days,1)';
-end
-
 
 D = Dsnack;
 for i=1:length(D)
@@ -73,7 +66,7 @@ Gsc = mvpOutput(X,Noise); % [mg/dL]
 
 t = T*min2h;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
-x=GRID_Filter(GRID);
+[xTP xFP]=GRID_Filter(D,GRID,t);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
@@ -95,30 +88,19 @@ xlabel('Time [h]');
 title('Figure 5.1','FontSize',16)
 hold off
 
-%{
 subplot(412)
-plot(T*min2h, Gsc,'k-',T*min2h, GRID*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
+plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-', t, FP*max(Gsc)*1.1,'b-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
 title('Figure 5.2','FontSize',16)
-%}
+
 % -------------- Evaluation of simulation -------------------
 
 fprintf('---------- Measurement noise - No snack -------------- \n \n')
 
-[M, TP, Av,xTP] = MealCorrectness(D,GRID,T*min2h,1);
-
-subplot(412)
-plot(T*min2h, Gsc,'k-',T*min2h, xTP*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-')
-xlim([t0, tf]*min2h);
-ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Figure 5.2','FontSize',16)
-
-
+[M, TP, Av,xTP, FP] = MealCorrectness(D,GRID,T*min2h,1);
 
 
 
@@ -149,7 +131,7 @@ Gsc = mvpOutput(X,Noise); % [mg/dL]
 
 t = T*min2h;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,12,t);
-x=GRID_Filter(GRID);
+[xTP xFP]=GRID_Filter(D,GRID,t);
 
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
@@ -170,31 +152,20 @@ xlabel('Time [h]');
 title('Figure 5.3','FontSize',16)
 hold off
 
-%{
-subplot(414)
-plot(T*min2h, Gsc,'k-',T*min2h, GRID*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
+subplot(412)
+plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-', t, FP*max(Gsc)*1.1,'b-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-legend({'CGM','Predicted Meal','Actual Meal','snack'},'Position',[0.82 0.48 0.01 0.005])
-title('Figure 5.4','FontSize',16)
-%}
+title('Figure 5.2','FontSize',16)
 
 % -------------- Evaluation of simulation -------------------
 
 fprintf('---------- Measurement noise - With snack -------------- \n \n')
 
-[M, TP, Av,xTP] = MealCorrectness(Dsnack,GRID,T*min2h,1);
+[M, TP, Av,xTP, FP] = MealCorrectness(D,GRID,T*min2h,1);
 
-subplot(414)
-plot(T*min2h, Gsc,'k-',T*min2h, xTP*max(Gsc)*1.1,'r-',T*min2h,correctMeal*max(Gsc)*1.1,'g-',T*min2h,correctSnack*max(Gsc)*1.1,'y-')
-xlim([t0, tf]*min2h);
-ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-legend({'CGM','Predicted Meal','Actual Meal','snack'},'Position',[0.82 0.48 0.01 0.005])
-title('Figure 5.4','FontSize',16)
 
 %% Save image - measurement noise
 
