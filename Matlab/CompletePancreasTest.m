@@ -147,6 +147,7 @@ ctrlPar = [
 dg = 15;
 dt = 5;
 gridTime = 3*h2min/Ts;
+mealTime = 2.5*h2min/Ts;
 
 % Ramping function
 rampingfunction = @sigmoidRamp;
@@ -166,7 +167,7 @@ ctrlAlgorithm = @pidControllerSupBolus;
 [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Duse, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
     ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-    rampingfunction, dg, dt, gridTime, opts);
+    rampingfunction, dg, dt, gridTime, mealTime, opts);
 
 % Blood glucose concentration
 Gsc = mvpOutput(X,1); % [mg/dL]
