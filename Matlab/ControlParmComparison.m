@@ -130,7 +130,7 @@ tzero = (0.5*h2min)/Ts;
 % Control algorithm
 ctrlAlgorithm = @pidControllerSupBolus;
 
-penalties = nan(5,5,5);
+penalties = nan(8,8,8);
 
 % Computing super bolus without PID simulation
 simPID = 0;
@@ -140,7 +140,7 @@ simPID = 0;
 % 0.2500; %           Derivative gain
 
 KPs = linspace(0, 0.05, 8);
-KIs = linspace(0, 0.0001, 8);
+KIs = linspace(0, 0.005, 8);
 KDs = linspace(0, 15, 8);
 
 %% Simulating
@@ -169,7 +169,7 @@ for i = 1:length(KPs)
                 simModel, observationModel, ctrlAlgorithm, ...
                 ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
                 rampingfunction, dg, dt, gridTime, opts);
-
+            
             penalties(i,j,k) = asymmetricQuadraticPenaltyFunction(T,Y,p);
         end
     end

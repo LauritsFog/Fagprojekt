@@ -1,7 +1,7 @@
 function [T, X, Y, U, ctrlState] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
     ctrlPar, ctrlState0, simMethod, tzero, haltingiter, idxbo, rampingfunction, ...
-    dg, dt, gridTime, opts)
+    dg, dt, gridTime, mealTime, opts)
 % CLOSEDLOOPSIMULATION Simulate a closed-loop control algorithm.
 %
 % SYNOPSIS:
@@ -147,9 +147,9 @@ for k = 1:N
             [~,~,GRID]=GridAlgo(Y(k-gridTime:k),dg,dt,[],tspan(k-gridTime:k));
         end
 
-        % If meal is detected and no meal has been detected for in past
+        % If meal is detected and no meal has been detected in past
         % gridTime
-        if k > gridTime && nnz(GRID) > 0 && nnz(Dest(k-gridTime:k)) == 0
+        if k > mealTime && nnz(GRID) > 0 && nnz(Dest(k-mealTime:k)) == 0
             dkest = 1;
         else
             dkest = 0;

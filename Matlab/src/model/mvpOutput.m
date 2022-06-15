@@ -50,11 +50,6 @@ function [G] = mvpOutput(X, b)
 % Asbjørn Thode Reenberg
 % John Bagterp Jørgensen
 
-if ~exist('b','var')
-     % second parameter does not exist, so default it to something
-      b = 1;
-end
-
 b = 0;
 
 % Glucose subsystem
