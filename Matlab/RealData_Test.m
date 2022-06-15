@@ -5,8 +5,8 @@
 
 %% Init
 loadLib();
-%addpath('/Users/frederiknagel/Desktop/RealCGMData_DO_NOT_SHARE')
-addpath('G:\My Drive\Dtu\4 Semester\Fagprojekt')
+addpath('/Users/frederiknagel/Desktop/RealCGMData_DO_NOT_SHARE')
+%addpath('G:\My Drive\Dtu\4 Semester\Fagprojekt')
 Days = 3;
 InitData();
 
@@ -54,6 +54,7 @@ end
 dg=3;
 dt=1;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,[],t);
+[xTP, xFP]=GRID_Filter(D,GRID,t);
 
 figure(4);
 subplot(211)
@@ -69,12 +70,12 @@ xlabel('Time [h]');
 %title('Real Data - GRID algo')
 
 subplot(212)
-plot(t, Gsc,'k-',t,GRID*350,'r-',t,correctMeal*350,'g-','LineWidth',1.5)
+plot(t, Gsc,'k-',t,xTP*350,'r-',t,correctMeal*350,'g-',t,xFP*350,'b-')
 xlim([0 t(end)]);
 ylim([0 350]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-legend({'CGM','Predicted Meal','Actual Meal'},'Position',[0.82 0.50 0.01 0.005])
+legend({'CGM','True positive','Actual Meal','False positive'},'Position',[0.82 0.48 0.05 0.005])
 
 %%
 saveas(figure(4),[pwd '/Images/RealDataGRID.png']);
