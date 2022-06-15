@@ -78,8 +78,10 @@ Gs = 108; % [mg/dL]
 if(flag ~= 1), error ('fsolve did not converge!'); end
 
 % Initial and final time
+days = 10;
+hours = days*24;
 t0 =  0;       % min
-tf = 48*h2min; % min
+tf = hours*h2min; % min
 
 % Sampling time
 Ts = 5; % min
@@ -97,7 +99,7 @@ tspan = Ts*(0:N);
 x0 = xs;
 
 % Disturbance variables with multiple meals
-Dmealplan = MealPlan(2,false)';
+Dmealplan = MealPlan(days,true)';
 
 % Select which D to use
 Duse = Dmealplan;
@@ -116,8 +118,8 @@ haltingiter = haltinghours*h2min/Ts;
 rampingfunction = @sigmoidRamp;
 
 % Parameters for grid algorithm
-dg = 10;
-dt = 1;
+dg = 15;
+dt = 5;
 gridTime = 3*h2min/Ts;
 
 % Time before titration begins
@@ -126,7 +128,7 @@ tzero = (0.5*h2min)/Ts;
 %% Setting parameters
 
 % Control algorithm
-ctrlAlgorithm = @pidController;
+ctrlAlgorithm = @pidControllerSupBolus;
 
 penalties = nan(5,5,5);
 
@@ -137,9 +139,9 @@ simPID = 0;
 % 0.0005; %           Integral gain
 % 0.2500; %           Derivative gain
 
-KPs = linspace(0, 0.5, 8);
-KIs = linspace(0, 0.0005, 8);
-KDs = linspace(0, 1, 8);
+KPs = linspace(0, 0.05, 8);
+KIs = linspace(0, 0.0001, 8);
+KDs = linspace(0, 15, 8);
 
 %% Simulating
 
@@ -155,18 +157,18 @@ for i = 1:length(KPs)
                 108.0;    % [mg/dL]   Target blood glucose concentration
                 us(1)];     % [mU/min]  Nominal basal rate 
             
-            [T, X, Y, U] = closedLoopSimulation(x0, tspan, Duse, p, ...
-                    simModel, observationModel, ctrlAlgorithm, ...
-                    ctrlPar, ctrlState, simMethod, opts);
+%             [T, X, Y, U] = closedLoopSimulation(x0, tspan, Duse, p, ...
+%                     simModel, observationModel, ctrlAlgorithm, ...
+%                     ctrlPar, ctrlState, simMethod, opts);
 
 %             [T, X, Y, U] = closedLoopSimulationSupBolus(x0, tspan, Duse, p, ...
 %                 simModel, observationModel, ctrlAlgorithm, ...
 %                 ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, simPID, rampingfunction, opts);
 
-%             [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Duse, p, ...
-%                 simModel, observationModel, ctrlAlgorithm, ...
-%                 ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-%                 rampingfunction, dg, dt, gridTime, opts);
+            [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Duse, p, ...
+                simModel, observationModel, ctrlAlgorithm, ...
+                ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+                rampingfunction, dg, dt, gridTime, opts);
 
             penalties(i,j,k) = asymmetricQuadraticPenaltyFunction(T,Y,p);
         end

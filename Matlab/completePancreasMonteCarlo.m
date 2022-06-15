@@ -90,8 +90,8 @@ tspan = Ts*(0:N);
 idxbo = 2;
 
 % Parameters for grid algorithm
-dg = 8;
-dt = 1;
+dg = 15;
+dt = 5;
 gridTime = 3*h2min/Ts;
 
 % Ramping function
@@ -100,9 +100,6 @@ rampingfunction = @sigmoidRamp;
 % Time before titration begins [timesteps]
 tzero = (0.5*h2min)/Ts;
 
-% Control algorithm
-ctrlAlgorithm = @pidController;
-
 % Halting iterations used in PID controller
 haltinghours = 3;
 haltingiter = haltinghours*h2min/Ts;
@@ -110,15 +107,6 @@ haltingiter = haltinghours*h2min/Ts;
 %% Simulate
 
 % Controller parameters and state
-% Only PID
-% ctrlPar = [
-%       5.0;    % [min]     Sampling time
-%       0.05;   %           Proportional gain
-%       0.0005; %           Integral gain
-%       0.25; %           Derivative gain
-%     108.0;    % [mg/dL]   Target blood glucose concentration
-%     us(1)];     % [mU/min]  Nominal basal rate 
-
 % 0.05;   %           Proportional gain
 % 0.0005; %           Integral gain
 % 0.2500; %           Derivative gain
@@ -130,10 +118,14 @@ Gsc = cell(1,k);
 Bolus = cell(1,k);
 Basal = cell(1,k);
 
+% Control algorithm
+ctrlAlgorithm = @pidController;
+
 parfor i = 1:k
     p = CreatePerson();
     [xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
     
+    % For artificial pancreas complete
 %     ctrlPar = [
 %       5.0;    % [min]     Sampling time
 %       0;   %           Proportional gain
@@ -142,11 +134,12 @@ parfor i = 1:k
 %     108.0;    % [mg/dL]   Target blood glucose concentration
 %     us(1)];     % [mU/min]  Nominal basal rate 
 
+    % For simple PID controller
     ctrlPar = [
       5.0;    % [min]     Sampling time
-      0.15;   %           Proportional gain
-      0.0003; %           Integral gain
-      0.5; %           Derivative gain
+      0;   %           Proportional gain
+      4e-06; %           Integral gain
+      13; %           Derivative gain
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
     
@@ -154,16 +147,16 @@ parfor i = 1:k
     x0 = xs;
     
     % Creates new mealplan
-    D = MealPlan(days,1)';
+    D = MealPlan(days,true)';
     
-%     [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
-%     simModel, observationModel, ctrlAlgorithm, ...
-%     ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-%     rampingfunction, dg, dt, gridTime, opts);
-    
-    [T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
+    [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
-    ctrlPar, ctrlState, simMethod, opts);
+    ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
+    rampingfunction, dg, dt, gridTime, opts);
+    
+%     [T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
+%     simModel, observationModel, ctrlAlgorithm, ...
+%     ctrlPar, ctrlState, simMethod, opts);
 
     % Blood glucose concentration
     Gsc{i} = mvpOutput(X,1)'; % [mg/dL]
