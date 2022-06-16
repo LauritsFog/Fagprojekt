@@ -171,7 +171,7 @@ fprintf('---------- Measurement noise - With snack -------------- \n \n')
 
 
 saveas(fig1,[pwd '/Images/Noise.png']);    
-
+%%
 
 fig12 = figure(12);
 fig12.Position = [50 50 1740 600];
@@ -191,7 +191,7 @@ ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
 legend({'CGM','Predicted Meal','Actual Meal','Snack','False Positive'},'Position',[0.85 0.51 0.01 0.005])
 title('Figure 6.4 - With False Positives','FontSize',16)
-
+%%
 saveas(fig12,[pwd '/Images/NoiseFP.png']);
 
 
@@ -327,7 +327,7 @@ fprintf('---------- EulerMaruyama - With snack -------------- \n \n')
 
 saveas(figure(3),[pwd '/Images/EulerM.png']);
 
-
+%%
 fig32 = figure(32);
 fig32.Position = [50 50 1740 600];
 subplot(211)
@@ -346,7 +346,7 @@ ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
 legend({'CGM','Predicted Meal','Actual Meal','Snack','False Positive'},'Position',[0.85 0.51 0.01 0.005])
 title('Figure 7.4 - With False Positives','FontSize',16)
-
+%%
 saveas(fig32,[pwd '/Images/EulerMFP.png']);
 
 
