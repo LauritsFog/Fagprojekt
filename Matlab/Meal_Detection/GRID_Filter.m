@@ -18,7 +18,7 @@ for i=1:length(GRID)
         j = 0;
         while(GRID(i+j)==1) % As long as the next index in the GRID oiutput is 1 this whileloop is going
            
-            if(i+j+5 >= length(GRID)) % Makes sure we dont go out of bound
+            if(i+j+7 >= length(GRID)) % Makes sure we dont go out of bound
                 break;
             end
             
