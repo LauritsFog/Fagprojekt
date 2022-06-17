@@ -79,7 +79,7 @@ X(1, :) = x0;
 % Storing dt and dW and defining R
 R = 4;
 dt = tspan(2)-tspan(1);
-dW = sqrt(dt)*randn(1,N*R);
+dW = sqrt(dt)*(randn(1,N*R));
 
 for k = 1:N
     % Next time

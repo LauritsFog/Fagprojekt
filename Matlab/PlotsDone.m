@@ -4,7 +4,7 @@ clear; clear all;
 loadLib();
 clc;
 
-Days = 4;
+Days = 3;
 InitData();
 
 % Noise Level
@@ -71,7 +71,7 @@ t = T*min2h;
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
 fig1 = figure(1);
-fig1.Position = [50 50 1740 600];
+fig1.Position = [50 50 1700 750];
 subplot(411);
 hold on
 % Plot blood glucose concentration
@@ -83,18 +83,18 @@ plot(T*min2h, Gsc, 'Color',c(1,:));
 yline(ctrlParFinal(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Figure 6.1','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 6.1','FontSize',18)
 hold off
 
 subplot(412)
 plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Figure 6.2','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 6.2','FontSize',18)
 
 % -------------- Evaluation of simulation -------------------
 
@@ -147,19 +147,20 @@ plot(T*min2h, Gsc1, 'Color',c(1,:));
 yline(ctrlParFinal(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([min(Gsc1)*0.8, max(Gsc1)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Figure 6.3','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 6.3','FontSize',18)
 hold off
 
 subplot(414)
 plot(t, Gsc1,'k-',t, xTP1*max(Gsc1)*1.1,'r-',t,correctMeal*max(Gsc1)*1.1,'g-',t,correctSnack*max(Gsc1)*1.1,'y-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc1)*0.8, max(Gsc1)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-legend({'CGM','Predicted Meal','Actual Meal','Snack'},'Position',[0.82 0.50 0.01 0.005])
-title('Figure 6.4','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 6.4','FontSize',18)
+legend({'CGM','Predicted Meal','Actual Meal','Snack'},'Position',[0.83 0.49 0.01 0.05],'FontSize',14)
+
 
 % -------------- Evaluation of simulation -------------------
 
@@ -170,29 +171,29 @@ fprintf('---------- Measurement noise - With snack -------------- \n \n')
 %% Save image - measurement noise
 
 
-saveas(fig1,[pwd '/Images/Noise.png']);    
+% saveas(fig1,[pwd '/Images/Noise.png']);    
 
 
 fig12 = figure(12);
-fig12.Position = [50 50 1740 600];
+fig12.Position = [50 50 1700 750];
 subplot(211)
 plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-', t, xFP*max(Gsc)*1.1,'b:')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Figure 6.2 - With False Positives','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 6.2 - With False Positives','FontSize',18)
 
 subplot(212)
 plot(t, Gsc1,'k-',t, xTP1*max(Gsc1)*1.1,'r-',t,correctMeal*max(Gsc1)*1.1,'g-',t,correctSnack*max(Gsc1)*1.1,'y-', t, xFP1*max(Gsc1)*1.1,'b:')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc1)*0.8, max(Gsc1)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-legend({'CGM','Predicted Meal','Actual Meal','Snack','False Positive'},'Position',[0.85 0.51 0.01 0.005])
-title('Figure 6.4 - With False Positives','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+legend({'CGM','Predicted Meal','Actual Meal','Snack','False Positive'},'Position',[0.83 0.49 0.01 0.05],'FontSize',14)
+title('Figure 6.4 - With False Positives','FontSize',18)
 
-saveas(fig12,[pwd '/Images/NoiseFP.png']);
+% saveas(fig12,[pwd '/Images/NoiseFP.png']);
 
 
 
@@ -228,7 +229,7 @@ t = T*min2h;
 % -------------------Visualize-------------------
 % Create figure with absolute size for reproducibility
 fig3 = figure(3);
-fig3.Position = [50 50 1740 600];
+fig3.Position = [50 50 1700 750];
 subplot(411);
 hold on
 % Plot blood glucose concentration
@@ -240,18 +241,18 @@ plot(T*min2h, Gsc, 'Color',c(1,:));
 yline(ctrlParFinal(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Figure 7.1','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 7.1','FontSize',18)
 hold off
 
 subplot(412)
 plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Figure 7.2','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 7.2','FontSize',18)
 
 
 % -------------- Evaluation of simulation -------------------
@@ -304,19 +305,19 @@ plot(T*min2h, Gsc1, 'Color',c(1,:));
 yline(ctrlParFinal(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([min(Gsc1)*0.8, max(Gsc1)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Figure 7.3','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 7.3','FontSize',18)
 hold off
 
 subplot(414)
 plot(T*min2h, Gsc1,'k-',T*min2h, xTP1*max(Gsc1)*1.1,'r-',T*min2h,correctMeal*max(Gsc1)*1.1,'g-',T*min2h,correctSnack*max(Gsc1)*1.1,'y-')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc1)*0.8, max(Gsc1)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-legend({'CGM','Predicted Meal','Actual Meal','Snack'},'Position',[0.82 0.48 0.01 0.005])
-title('Figure 7.4','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+legend({'CGM','Predicted Meal','Actual Meal','Snack'},'Position',[0.83 0.49 0.01 0.05],'FontSize',14)
+title('Figure 7.4','FontSize',18)
 
 fprintf('---------- EulerMaruyama - With snack -------------- \n \n')
 
@@ -325,30 +326,29 @@ fprintf('---------- EulerMaruyama - With snack -------------- \n \n')
 %% Save image - EulerMaruyama
 
 
-saveas(figure(3),[pwd '/Images/EulerM.png']);
+% saveas(figure(3),[pwd '/Images/EulerM.png']);
 
 
 fig32 = figure(32);
-fig32.Position = [50 50 1740 600];
+fig32.Position = [50 50 1700 750];
 subplot(211)
 plot(t, Gsc,'k-',t, xTP*max(Gsc)*1.1,'r-',t,correctMeal*max(Gsc)*1.1,'g-', t, xFP*max(Gsc)*1.1,'b:')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc)*0.8, max(Gsc)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Figure 7.2 - With False Positives','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 7.2 - With False Positives','FontSize',18)
 
 subplot(212)
 plot(t, Gsc1,'k-',t, xTP1*max(Gsc1)*1.1,'r-',t,correctMeal*max(Gsc1)*1.1,'g-',t,correctSnack*max(Gsc1)*1.1,'y-', t, xFP1*max(Gsc1)*1.1,'b:')
 xlim([t0, tf]*min2h);
 ylim([min(Gsc1)*0.8, max(Gsc1)*1.1]);
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-legend({'CGM','Predicted Meal','Actual Meal','Snack','False Positive'},'Position',[0.85 0.51 0.01 0.005])
-title('Figure 7.4 - With False Positives','FontSize',16)
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+legend({'CGM','Predicted Meal','Actual Meal','Snack','False Positive'},'Position',[0.83 0.49 0.01 0.05],'FontSize',14)
+title('Figure 7.4 - With False Positives','FontSize',18)
 
-saveas(fig32,[pwd '/Images/EulerMFP.png']);
-
+% saveas(fig32,[pwd '/Images/EulerMFP.png']);
 
 
 %% ________________________________________________________________________
@@ -398,7 +398,7 @@ FP100 = 0;
 Av100 = 0;
 
 fig2 = figure(2);
-fig2.Position = [300 300 1740 600];
+fig2.Position = [300 300 1700 750];
 subplot(211)
 hold on
 
@@ -450,9 +450,9 @@ parfor i=1:X
     
     % Plot blood glucose concentration
     plot(T*min2h, Gsc);
-    ylabel({'CGM', '[mg/dL]'});
-    xlabel('Time [h]');
-    title('Simulation of 100 patients')
+    ylabel('CGM  [mg/dL]','FontSize',16);
+    xlabel('Time [h]','FontSize',16);
+    title('Figure 8.1','FontSize',18)
     xlim([t0, tf]*min2h);
     
 end
@@ -483,16 +483,16 @@ for i = length(Gcrit):-1:1
 end
 plot(t,GscAv,'k-');
 xlim([t0, tf]*min2h);
-ylim([0 400])
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Average of the 100 patients')
+ylim([min(GscAv)*0.9 max(GscAv)*1.1])
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 8.2','FontSize',18)
 
 
 %% Save image - 100 patients measurement noise
 
 
-saveas(figure(2),[pwd '/Images/Noise100.png']);
+ %saveas(figure(2),[pwd '/Images/Noise100.png']);
 
 
 
@@ -523,7 +523,7 @@ FP100 = 0;
 Av100 = 0;
 
 fig4 = figure(4);
-fig4.Position = [300 300 1740 600];
+fig4.Position = [300 300 1700 750];
 subplot(211)
 hold on
 
@@ -575,9 +575,9 @@ parfor i=1:X
     
     % Plot blood glucose concentration
     plot(T*min2h, Gsc);
-    ylabel({'CGM', '[mg/dL]'});
-    xlabel('Time [h]');
-    title('Simulation of 100 patients')
+    ylabel('CGM  [mg/dL]','FontSize',16);
+    xlabel('Time [h]','FontSize',16);
+    title('Figure 9.1','FontSize',18)
     xlim([t0, tf]*min2h);
     
 end
@@ -588,7 +588,7 @@ TP100 = TP100;
 procent = round(TP100/M100*100,2);
 Av100 = Av100/X;
 
-fprintf('---------- Measurement noise 100 patients -------------- \n \n')
+fprintf('---------- Euler-Maruyama 100 patients -------------- \n \n')
 
 A = sprintf('Total number of meals: %g',M100);
 B = sprintf('Total number of founds meals: %g',TP100);
@@ -608,14 +608,14 @@ for i = length(Gcrit):-1:1
 end
 plot(t,GscAv,'k-');
 xlim([t0, tf]*min2h);
-ylim([0 400])
-ylabel({'CGM', '[mg/dL]'});
-xlabel('Time [h]');
-title('Average of the 100 patients')
+ylim([min(GscAv)*0.9 max(GscAv)*1.1])
+ylabel('CGM  [mg/dL]','FontSize',16);
+xlabel('Time [h]','FontSize',16);
+title('Figure 9.2','FontSize',18)
 
 %% Save image - 100 patients EulerMaruyama
 
 
-saveas(figure(4),[pwd '/Images/EulerM100.png']);
+ saveas(figure(4),[pwd '/Images/EulerM100.png']);
 
 
