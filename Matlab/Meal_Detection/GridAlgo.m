@@ -1,4 +1,4 @@
-function [GF,dGF,GRID,ddGF]=GridAlgo(Gm,dG,dt,~,t)
+function [GF,dGF,GRID]=GridAlgo(Gm,dG,dt,~,t)
 %%%%%%%%%%%%%%%
 %Function to calculate the Grid algorithm
 %% input
@@ -25,7 +25,6 @@ Gmin2=1.6;%mg/dL/min
 k=length(Gm);
 
 dGF=zeros(1,k);
-ddGF=zeros(1,k);
 %% preprocessing section
 GFNS=NoiseSpikeFilter(Gm,dG);
 
