@@ -134,15 +134,15 @@ for k = 1:N
         tpause = haltingiter;
 
         if k > gridTime
-            % [~,Ytemp] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, 8, tzero, haltingiter, rampingfunction);
+            [~,Ytemp] = simulatePID(tk, xk, yk, dk, Nk, p, ctrlPar, ctrlStatek, ctrlAlgorithm, simModel, simMethod, observationModel, 8, tzero, haltingiter, rampingfunction);
             
-            % dY = Ytemp(2:end)-Ytemp(1:end-1);
+            dY = Ytemp(2:end)-Ytemp(1:end-1);
 
-            Ylowpass = lowpassfilter(Y(k-gridTime),dtlowpass,tau,gridTime);
+            % Ylowpass = lowpassfilter(Y(k-gridTime),dtlowpass,tau,gridTime);
 
-            dYlowpass = Ylowpass(2:end)-Ylowpass(1:end-1);
+            % dYlowpass = Ylowpass(2:end)-Ylowpass(1:end-1);
 
-            dYmean = mean(dYlowpass);
+            dYmean = mean(dY);
         end
         
         if simPID == 1
@@ -152,7 +152,7 @@ for k = 1:N
             
             ubok = sum(Ubolus(1,:));
         else
-            ubok = alpha*Ylowpass(end)*haltingiter*max([0,beta+gamma*dYmean]);
+            ubok = alpha*Ytemp(end)*haltingiter*max([0,beta+gamma*dYmean]);
         end
         
     else

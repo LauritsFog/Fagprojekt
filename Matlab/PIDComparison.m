@@ -81,7 +81,7 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 
 % Initial and final time
-days = 10;
+days = 3;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min

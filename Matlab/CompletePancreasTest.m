@@ -21,7 +21,7 @@ run('loadLib');
 
 %% Formatting
 % Font size
-fs = 11;
+fs = 15;
 
 % Line width
 lw = 3;
@@ -50,6 +50,7 @@ simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
+measurementNoise = 9;
 
 % Observed variables
 observationModel = @(t, x, p) x(7);
@@ -81,7 +82,7 @@ if(flag ~= 1), error ('fsolve did not converge!'); end
 objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 
 % Initial and final time
-days = 5;
+days = 4;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -125,9 +126,9 @@ idxbo = 2;
 
 ctrlPar = [
       5.0;    % [min]     Sampling time
-      0;   %           Proportional gain
-      0; %           Integral gain
-      15; %           Derivative gain
+      0.1;   %           Proportional gain
+      0.0007; %           Integral gain
+      1; %           Derivative gain
     108.0;    % [mg/dL]   Target blood glucose concentration
     us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
 
@@ -170,10 +171,28 @@ ctrlAlgorithm = @pidControllerSupBolus;
     rampingfunction, dg, dt, gridTime, mealTime, opts);
 
 % Blood glucose concentration
-Gsc = mvpOutput(X,1); % [mg/dL]
+Gsc = mvpOutput(X,measurementNoise); % [mg/dL]
+
+ctrlPar = [
+      5.0;    % [min]     Sampling time
+      0.15;   %           Proportional gain
+      0.000005; %           Integral gain
+      1; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
+    
+% Control algorithm
+ctrlAlgorithm = @pidController;
+
+[Tclosed, Xclosed, Yclosed, Uclosed] = closedLoopSimulation(x0, tspan, Duse, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlPar, ctrlState, simMethod, opts);
+
+% Blood glucose concentration
+Gscclosed = mvpOutput(Xclosed); % [mg/dL]
 
 %% Visualization
-c = copper(1);
+c = copper(3);
 
 % Setting critical intervals and interval colors
 Gcrit = [3,3.9,10,13.9,2*13.9]*mmolL2mgdL;
@@ -188,12 +207,13 @@ for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
+p2 = plot(T*min2h, Gscclosed,'Color',c(2,:));
 p1 = plot(T*min2h, Gsc,'Color',c(1,:));
 yline(ctrlPar(5),'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
 ylim([0, max(Gsc)*1.2]);
-ylabel({'Blood glucose concentration', '[mg/dL]'});
-legend([p1],'Complete pancreas')
+ylabel({'CGM measurements', '[mg/dL]'});
+legend([p1, p2],'ABP', 'PID pancreas')
 
 % Plot meal carbohydrate
 subplot(412);
@@ -203,12 +223,16 @@ ylabel({'Meal carbohydrates', '[g CHO]'});
 
 % Plot basal insulin flow rate
 subplot(413);
+stairs(tspan*min2h, Uclosed(1, [1:end, end]),'LineWidth', 2.5,'Color',c(2,:));
+hold on
 stairs(tspan*min2h, U(1, [1:end, end]),'LineWidth', 2.5,'Color',c(1,:));
 xlim([t0, tf]*min2h);
 ylabel({'Basal insulin', '[mU/min]'});
 
 % Plot bolus insulin
 subplot(414);
+stem(tspan(1:end-1)*min2h, Ts*mU2U*Uclosed(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 'o', 'MarkerSize', 4, 'Color', c(2,:));
+hold on
 stem(tspan(1:end-1)*min2h, Ts*mU2U*U(2, :),'filled','LineStyle','-','LineWidth', 0.5,'Marker', 'o', 'MarkerSize', 4, 'Color', c(1,:));
 xlim([t0, tf]*min2h);
 ylim([0, 1.2*Ts*mU2U*max(U(2, :))+1]);

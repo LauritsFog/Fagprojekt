@@ -4,11 +4,6 @@ function [T, X, Y, U, ctrlState] = closedLoopSimulationComplete(x0, tspan, D, p,
     dg, dt, gridTime, mealTime, opts)
 % CLOSEDLOOPSIMULATION Simulate a closed-loop control algorithm.
 %
-% SYNOPSIS:
-%   [T, X, U] = closedLoopSimulation(x0, tspan, D, p, ...
-%     simModel, observationModel, ctrlAlgorithm, ...
-%     ctrlPar, ctrlModel, ctrlModelPar, ctrlState)
-%
 % DESCRIPTION:
 % Perform a closed-loop simulation of a model-based control algorithm for
 % given initial condition, control intervals, disturbance variables,
@@ -28,8 +23,11 @@ function [T, X, Y, U, ctrlState] = closedLoopSimulationComplete(x0, tspan, D, p,
 %   ctrlState0          - initial controller state                          (dimension: nc)
 %   simMethod           - simulation method         (function handle)
 %   opts                - an options structure (must contain the field Nk)
-%
-% OPTIONAL PARAMETERS:
+%   tzero               - time where ramping function is 0
+%   haltingiter         - time where integration is halted has basal is ramped
+%   dg, dt              - parameters used in GRID
+%   gridTime            - time period parsed to GRID at every time step
+%   mealTime            - time period in which only 1 meal is allowed
 %
 % RETURNS:
 %   T - boundaries of control intervals (=tspan)    (dimension:      N+1)
@@ -37,34 +35,17 @@ function [T, X, Y, U, ctrlState] = closedLoopSimulationComplete(x0, tspan, D, p,
 %   X - the observed variables                      (dimension: ny x N+1)
 %   U - the computed manipulated inputs             (dimension: nu x N  )
 %   ctrlState - matrix of controller states         (dimension: nc x N+1)
-%
-% DEPENDENCIES:
-%
-% See also 
-% 
-% REFERENCES
-% [1] Kanderian, S. S., Weinzimer, S., Voskanyan, G., and Steil, G. M.
-% (2009). Identification of intraday metabolic profiles during closed-loop
-% glucose control in individuals with type 1 diabetes. Journal of Diabetes
-% Science and Technology, 3(5), 1047-1057.
-% [2] Facchinetti, A., Favero, S. D., Sparacino, G., Castle, J. R., Ward,
-% W. K., and Cobelli, C. (2014). Modeling the glucose sensor error. IEEE
-% Transactions on Biomedical Engineering, 61(3), 620-629.
-% [3] Reenberg, A. T., Ritschel, T. K. S., Lindkvist, E. B., Laugesen, C.,
-% Svensson, J., Ranjan, A. G., Nørgaard, K. Jørgensen, J. B., 2022.
-% Nonlinear Model Predictive Control and System Identification for a Dual-
-% hormone Artificial Pancreas. In submission. arXiv: 2202.13938.
-% 
-% CONTACT INFORMATION
-%  info@diamatica.com
-%  tobk@dtu.dk
-% athre@dtu.dk
-%  jbjo@dtu.dk
 % 
 % AUTHORS
 % Tobias K. S. Ritschel
 % Asbjørn Thode Reenberg
 % John Bagterp Jørgensen
+%
+% CHANGED BY
+%
+% Frederik Nagel
+% Laurits Fog Balstrup
+% Morten M. Christensen
 
 % Initial time
 t0 = tspan(1);
@@ -113,23 +94,16 @@ GRID = zeros(1,gridTime);
 
 Dest = zeros(1,length(tspan));
 
-% Insuling to carbohydrate ratio
-ICR = 1/2;
-
-% If 1 meal size estimation is used, otherwise grid algo is used
-mealMethod = 0;
-
-% Minimim meal sizes allowed
-minMeal = 0.3;
+% Maximum meal sizes allowed
+maxMeal = 2000;
 
 % bolus scalar
-alpha = 0.2;
+alpha = 0.25;
 beta = 0.5;
 gamma = 0.1;
 
-% Parameters for lowpassfilter
-dtlowpass = 3;
-tau = 6;
+% time period used for computing Gsc derivative
+TdG = 6;
 
 for k = 1:N
     % Times
@@ -141,61 +115,34 @@ for k = 1:N
     % Disturbance variables
     dk = D(:, k);
     
-    % Detecting meals
-    if mealMethod == 0 % Using grid algo
-        if k > gridTime
-            [~,~,GRID]=GridAlgo(Y(k-gridTime:k),dg,dt,[],tspan(k-gridTime:k));
-        end
+    if k > gridTime
+        [~,~,GRID]=GridAlgo(Y(k-gridTime:k),dg,dt,[],tspan(k-gridTime:k));
+    end
 
-        % If meal is detected and no meal has been detected in past
-        % gridTime
-        if k > mealTime && nnz(GRID) > 0 && nnz(Dest(k-mealTime:k)) == 0
-            dkest = 1;
-        else
-            dkest = 0;
-        end
+    % If meal is detected and no meal has been detected in past
+    % gridTime
+    if k > mealTime && nnz(GRID) > 0 && nnz(Dest(k-mealTime:k)) == 0
+        dkest = 1;
+    else
+        dkest = 0;
+    end
 
-        Dest(k) = dkest;
+    Dest(k) = dkest;
 
-        % If meal is detected, halt integration for some iterations and compute
-        % optimal bolus
-        if dkest ~= 0
-            Ylowpass = lowpassfilter(Y(k-gridTime:k),dtlowpass,tau,gridTime);
+    % If meal is detected, halt integration for some iterations and
+    % estimate bolus
+    if dkest ~= 0
+        dYmean = mean(Y(k+1-TdG:k)-Y(k-TdG:k-1));
 
-            dYlowpass = Ylowpass(2:end)-Ylowpass(1:end-1);
+        tpause = haltingiter;
 
-            dYmean = mean(dYlowpass);
+        ubok = min(maxMeal,alpha*Y(k)*haltingiter*max([0,beta+gamma*dYmean]));
+    else
+        ubok = 0;
+    end
 
-            tpause = haltingiter;
-            
-            ubok = alpha*Ylowpass(end)*haltingiter*max([0,beta+gamma*dYmean]);
-        else
-            ubok = 0;
-        end
-        
-        if yk < ctrlPar(5)
-            ubok = 0;
-        end
-    else % Using meal estimation
-        if k > gridTime
-            [~,MealEst,~,~] = MealSize(Y(k-gridTime:k),tspan(k-gridTime:k));
-            
-            if sum(MealEst) > minMeal
-                dkest = sum(MealEst);
-            else
-                dkest = 0;
-            end
-        else
-            dkest = 0;
-        end
-        
-        Dest(k) = dkest;
-        
-        if dkest ~= 0 && tpause == 0
-            tpause = haltingiter;
-        end
-        
-        ubok = ICR*dkest;
+    if yk < ctrlPar(5)
+        ubok = 0;
     end
     
     % Decrement tpause until 0

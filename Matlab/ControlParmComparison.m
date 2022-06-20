@@ -45,18 +45,19 @@ mmolL2mgdL = 18; % Convert from mmol/L to mg/dL
 %% Create simulation scenario
 
 % Simulation model
-simModel = @mvpModel;
-% simModel = @mvpNoise;
+% simModel = @mvpModel;
+simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
+measurementNoise = 0;
 
 % Observed variables
 observationModel = @(t, x, p) x(7);
 
 % Simulation method/function
-simMethod = @odeEulersExplicitMethodFixedStepSize;
-% simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+% simMethod = @odeEulersExplicitMethodFixedStepSize;
+simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 ctrlState = [
       0.0;  %          Initial value of integral
@@ -78,7 +79,7 @@ Gs = 108; % [mg/dL]
 if(flag ~= 1), error ('fsolve did not converge!'); end
 
 % Initial and final time
-days = 10;
+days = 31;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -121,6 +122,7 @@ rampingfunction = @sigmoidRamp;
 dg = 15;
 dt = 5;
 gridTime = 3*h2min/Ts;
+mealTime = 2.5*h2min/Ts;
 
 % Time before titration begins
 tzero = (0.5*h2min)/Ts;
@@ -139,9 +141,9 @@ simPID = 0;
 % 0.0005; %           Integral gain
 % 0.2500; %           Derivative gain
 
-KPs = linspace(0, 0.05, 8);
-KIs = linspace(0, 0.005, 8);
-KDs = linspace(0, 15, 8);
+KPs = linspace(0, 0.3, 8);
+KIs = linspace(0, 0.0025, 8);
+KDs = linspace(0, 5, 8);
 
 %% Simulating
 
@@ -168,17 +170,17 @@ for i = 1:length(KPs)
             [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, Duse, p, ...
                 simModel, observationModel, ctrlAlgorithm, ...
                 ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-                rampingfunction, dg, dt, gridTime, opts);
+                rampingfunction, dg, dt, gridTime, mealTime, opts);
             
-            penalties(i,j,k) = asymmetricQuadraticPenaltyFunction(T,Y,p);
+            penalties(i,j,k) = asymmetricQuadraticPenaltyFunction(T,mvpOutput(X,measurementNoise),p);
         end
     end
 end
 
 %% Plotting
 
-penalties = log(penalties);
-penaltiesScaled = rescale(penalties,0,255);
+penaltiesTemp = log(penalties);
+penaltiesScaled = rescale(penaltiesTemp,0,255);
 
 figure;
 t = tiledlayout(2,4);
@@ -191,7 +193,7 @@ for i = 1:length(KPs)
     title("KP: " + round(KPs(i),3,"significant"))
 end
 cb = colorbar(h(end));
-cb.TickLabels = round(linspace(min(penalties(:)), max(penalties(:)), 6), 3, "significant");
+cb.TickLabels = round(linspace(min(penaltiesTemp(:)), max(penaltiesTemp(:)), 6), 3, "significant");
 cb.Layout.Tile = 'east';
 t.XLabel.String = "KI";
 t.YLabel.String = "KD";
@@ -201,6 +203,6 @@ t.YLabel.FontWeight = 'bold';
 %% Finding optimal parameters
 
 [v,loc] = min(penalties(:));
-[ii,jj,kk] = ind2sub(size(penalties),loc);
+[ii,jj,kk] = ind2sub(size(penaltiesTemp),loc);
 
-disp(penalties(ii,jj,kk) + " at KP = " + KPs(ii) + ", KI = " + KIs(jj) + ", KD = " + KDs(kk) + " with index " + ii + ", " + kk + ", " + jj)
+disp(penaltiesTemp(ii,jj,kk) + " at KP = " + KPs(ii) + ", KI = " + KIs(jj) + ", KD = " + KDs(kk) + " with index " + ii + ", " + kk + ", " + jj)

@@ -21,7 +21,7 @@ run('loadLib');
 
 %% Formatting
 % Font size
-fs = 11;
+fs = 15;
 
 % Line width
 lw = 3;
@@ -50,6 +50,7 @@ simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
+measurementNoise = 9;
 
 % Observed variables
 observationModel = @(t, x, p) x(7);
@@ -93,6 +94,7 @@ idxbo = 2;
 dg = 15;
 dt = 5;
 gridTime = 3*h2min/Ts;
+mealTime = 2.5*h2min/Ts;
 
 % Ramping function
 rampingfunction = @sigmoidRamp;
@@ -113,81 +115,120 @@ haltingiter = haltinghours*h2min/Ts;
 
 k = 100;
 
-Gsc = cell(1,k);
+GscCom = cell(1,k);
+GscPID = cell(1,k);
 
-Bolus = cell(1,k);
-Basal = cell(1,k);
+BolusCom = cell(1,k);
+BasalCom = cell(1,k);
 
-% Control algorithm
-ctrlAlgorithm = @pidController;
+BolusPID = cell(1,k);
+BasalPID = cell(1,k);
 
 parfor i = 1:k
     p = CreatePerson();
     [xs, us, flag] = computeSteadyStateMVPModel(ts, p, Gs);
-    
-    % For artificial pancreas complete
-%     ctrlPar = [
-%       5.0;    % [min]     Sampling time
-%       0;   %           Proportional gain
-%       0.0001; %           Integral gain
-%       0.35; %           Derivative gain
-%     108.0;    % [mg/dL]   Target blood glucose concentration
-%     us(1)];     % [mU/min]  Nominal basal rate 
 
-    % For simple PID controller
-    ctrlPar = [
-      5.0;    % [min]     Sampling time
-      0;   %           Proportional gain
-      4e-06; %           Integral gain
-      13; %           Derivative gain
-    108.0;    % [mg/dL]   Target blood glucose concentration
-    us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
-    
-    ctrlPar(6) = us(1);
     x0 = xs;
     
     % Creates new mealplan
     D = MealPlan(days,true)';
+
+    % For artificial pancreas complete
+    ctrlPar = [
+      5.0;    % [min]     Sampling time
+      0.1;   %           Proportional gain
+      0.0007; %           Integral gain
+      1; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate 
+
+    % Control algorithm
+    ctrlAlgorithm = @pidControllerSupBolus;
     
-    [T, X, Y, U] = closedLoopSimulationComplete(x0, tspan, D, p, ...
+    [TCom, XCom, YCom, UCom] = closedLoopSimulationComplete(x0, tspan, D, p, ...
     simModel, observationModel, ctrlAlgorithm, ...
     ctrlPar, ctrlState, simMethod, tzero, haltingiter, idxbo, ... 
-    rampingfunction, dg, dt, gridTime, opts);
+    rampingfunction, dg, dt, gridTime, mealTime, opts);
     
-%     [T, X, Y, U] = closedLoopSimulation(x0, tspan, D, p, ...
-%     simModel, observationModel, ctrlAlgorithm, ...
-%     ctrlPar, ctrlState, simMethod, opts);
+        % For PID controller
+    ctrlPar = [
+      5.0;    % [min]     Sampling time
+      0.15;   %           Proportional gain
+      0.000005; %           Integral gain
+      1; %           Derivative gain
+    108.0;    % [mg/dL]   Target blood glucose concentration
+    us(1)];     % [mU/min]  Nominal basal rate (overwritten below)
+    
+    % Control algorithm
+    ctrlAlgorithm = @pidController;
+
+    [TPID, XPID, YPID, UPID] = closedLoopSimulation(x0, tspan, D, p, ...
+    simModel, observationModel, ctrlAlgorithm, ...
+    ctrlPar, ctrlState, simMethod, opts);
 
     % Blood glucose concentration
-    Gsc{i} = mvpOutput(X,1)'; % [mg/dL]
+    GscCom{i} = mvpOutput(XCom,measurementNoise)'; % [mg/dL]
+
+    BolusCom{i} = UCom(2,:)';
+    BasalCom{i} = UCom(1,:)';
+
+    % Blood glucose concentration
+    GscPID{i} = mvpOutput(XPID,measurementNoise)'; % [mg/dL]
     
-    Bolus{i} = U(:,1)';
-    Basal{i} = U(:,2)';
+    BolusPID{i} = UPID(2,:)';
+    BasalPID{i} = UPID(1,:)';
 end
+
+%% Penalties
+
+penaltiesCom = nan(1,k);
+for i = 1:k
+    penaltiesCom(i) = asymmetricQuadraticPenaltyFunction(tspan,GscCom{i},[]);
+end
+
+penaltiesPID = nan(1,k);
+for i = 1:k
+    penaltiesPID(i) = asymmetricQuadraticPenaltyFunction(tspan,GscPID{i},[]);
+end
+
+n = 20;
+
+bins = linspace(min([penaltiesCom,penaltiesPID]),max([penaltiesCom,penaltiesPID]),n);
+
+figure
+subplot(211)
+histogram(penaltiesCom, bins, 'Normalization', 'probability')
+xlabel("Penalty score")
+ylabel("Rate [%]")
+title("Penalty score distribution for complete pancreas")
+subplot(212)
+histogram(penaltiesPID, bins, 'Normalization', 'probability')
+xlabel("Penalty score")
+ylabel("Rate [%]")
+title("Penalty score distribution for PID controller")
 
 %% Percent plot
 
 Gcrit = [3,3.9,10,13.9,2*13.9]*mmolL2mgdL;
 
-figure
-PlotProcent(ComputeProcent(cell2mat(Gsc), Gcrit));
-
-%% Penalties
-
-penalties = nan(1,k);
-for i = 1:k
-    penalties(i) = asymmetricQuadraticPenaltyFunction(tspan,Gsc{i},[]);
-end
+[valCom, idxCom] = max(penaltiesCom);
+[valPID, idxPID] = max(penaltiesPID);
 
 figure
-histogram(penalties,20)
+subplot(141)
+PlotProcent(ComputeProcent(cell2mat(GscCom), Gcrit));
+title("Complete pancreas" + newline)
+subplot(142)
+PlotProcent(ComputeProcent(cell2mat(GscPID), Gcrit));
+title("PID controller" + newline)
+subplot(143)
+PlotProcent(ComputeProcent(GscCom{idxCom}, Gcrit));
+title("Worst case with" + newline + "complete pancreas")
+subplot(144)
+PlotProcent(ComputeProcent(GscPID{idxPID}, Gcrit));
+title("Worst case with" + newline + "PID controller")
 
-%% Worst case
-
-[val, idx] = max(penalties);
-
-figure
-PlotProcent(ComputeProcent(Gsc{idx}, Gcrit));
+%% Plotting the worst case
 
 c = copper(3);
 
@@ -202,27 +243,47 @@ for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
     hold on
 end
-p1 = plot(tspan*min2h, Gsc{idx},'Color',c(1,:));
+p1 = plot(tspan*min2h, GscCom{idxCom},'Color',c(1,:));
 yline(Gs,'LineWidth',1.2,'Color','r','LineStyle','--');
 xlim([t0, tf]*min2h);
-ylim([0, max(Gsc{idx})*1.2]);
+ylim([0, max(GscCom{idxCom})*1.2]);
 ylabel({'CGM measurements', '[mg/dL]'});
 legend([p1],'Worst case')
 
 %% Boxplots and barplots
 
-figure
-boxplot(cell2mat(Gsc),'PlotStyle','compact')
+% figure
+% boxplot(cell2mat(Gsc),'PlotStyle','compact')
 
 n = 20;
 
+CGMbins = linspace(min(vec([cell2mat(GscCom);cell2mat(GscPID)])),max(vec([cell2mat(GscCom),cell2mat(GscPID)])),n);
+Basalbins = linspace(min(vec([cell2mat(BasalCom);cell2mat(BasalPID)])),max(vec([cell2mat(BasalCom),cell2mat(BasalPID)])),n);
+
 figure
-subplot(3,1,1)
-histogram(cell2mat(Gsc),n)
-title('CGM measurements')
-subplot(3,1,2)
-histogram(nonzeros(cell2mat(Basal)),n)
-title('Basal rate')
-subplot(3,1,3)
-histogram(nonzeros(cell2mat(Bolus)),n)
-title('Bolus size')
+subplot(3,2,1)
+histogram(cell2mat(GscCom),CGMbins, 'Normalization', 'probability')
+xlabel("CGM measurements [mg/dL]")
+ylabel("Rate [%]")
+title("Complete pancreas" + newline)
+subplot(3,2,3)
+histogram(cell2mat(BasalCom),Basalbins, 'Normalization', 'probability')
+xlabel("Basal insulin rates [mU/min]")
+ylabel("Rate [%]")
+subplot(3,2,5)
+histogram(Ts*mU2U*nonzeros(cell2mat(BolusCom)),n, 'Normalization', 'probability')
+xlabel("Bolus insulin sizes [U]")
+ylabel("Rate [%]")
+subplot(3,2,2)
+histogram(cell2mat(GscPID),CGMbins, 'Normalization', 'probability')
+xlabel("CGM measurements [mg/dL]")
+ylabel("Rate [%]")
+title("PID controller" + newline)
+subplot(3,2,4)
+histogram(cell2mat(BasalPID),Basalbins, 'Normalization', 'probability')
+xlabel("Basal insulin rates [mU/min]")
+ylabel("Rate [%]")
+subplot(3,2,6)
+histogram(Ts*mU2U*nonzeros(cell2mat(BolusPID)),n, 'Normalization', 'probability')
+xlabel("Bolus insulin sizes [U]")
+ylabel("Rate [%]")

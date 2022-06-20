@@ -46,8 +46,8 @@ mU2U  = 1/U2mU;  % Convert from mU  to Uopen
 ctrlAlgorithm = @pidController;
 
 % Simulation model
-% simModel = @mvpModel;
-simModel = @mvpNoise;
+simModel = @mvpModel;
+% simModel = @mvpNoise;
 
 % Output model
 outputModel = @mvpOutput;
@@ -56,8 +56,8 @@ outputModel = @mvpOutput;
 observationModel = @(t, x, p) x(7);
 
 % Simulation method/function
-% simMethod = @odeEulersExplicitMethodFixedStepSize;
-simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
+simMethod = @odeEulersExplicitMethodFixedStepSize;
+% simMethod = @odeEulerMaruyamasExplicitMethodFixedStepSize;
 
 % Controller parameters and state
 % ctrlPar = [
@@ -103,7 +103,7 @@ objectiveFunction = @asymmetricQuadraticPenaltyFunction;
 ctrlPar(6) = us(1);
 
 % Initial and final time
-days = 4;
+days = 1;
 hours = days*24;
 t0 =  0;       % min
 tf = hours*h2min; % min
@@ -239,3 +239,13 @@ subplot(1,3,3)
 PlotProcent(ComputeProcent(Gscclosed, Gcrit));
 title("Closed loop" + newline)
 
+%% Gsc vs G
+
+figure
+plot(Tclosed(70:250)*min2h,Gscclosed(70:250),'LineWidth',2);
+hold on
+plot(Tclosed(70:250)*min2h,Xclosed(6,70:250),'LineWidth',2);
+xlim([Tclosed(70)*min2h,Tclosed(250)*min2h])
+ylabel({"CGM measurements", '[mg/dL]'})
+xlabel('Time [h]');
+legend('CGM measurements (Gsc)','Glucose concentration (G)')
