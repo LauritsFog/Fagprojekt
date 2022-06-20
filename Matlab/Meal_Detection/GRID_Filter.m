@@ -18,9 +18,30 @@ for i=1:length(GRID)
         j = 0;
         while(GRID(i+j)==1) % As long as the next index in the GRID oiutput is 1 this whileloop is going
            
-            if(i+j+5 >= length(GRID)) % Makes sure we dont go out of bound
+            if(i+j+7 >= length(GRID)) % Makes sure we dont go out of bound
                 break;
             end
+            
+            % If there is a 30min gap between two meals, its merged as one
+            % meal
+           if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 0 && GRID(i+j+4) == 0 && GRID(i+j+5) == 0 && GRID(i+j+6) == 0 && GRID(i+j+7) == 1)
+              GRID(i+j+1) = 1;
+              GRID(i+j+2) = 1;
+              GRID(i+j+3) = 1;
+              GRID(i+j+4) = 1;
+              GRID(i+j+5) = 1;
+              GRID(i+j+6) = 1;
+           end
+            
+            % If there is a 25min gap between two meals, its merged as one
+            % meal
+           if(GRID(i+j) == 1 && GRID(i+j+1) == 0 && GRID(i+j+2) == 0 && GRID(i+j+3) == 0 && GRID(i+j+4) == 0 && GRID(i+j+5) == 0 && GRID(i+j+6) == 1)
+              GRID(i+j+1) = 1;
+              GRID(i+j+2) = 1;
+              GRID(i+j+3) = 1;
+              GRID(i+j+4) = 1;
+              GRID(i+j+5) = 1;
+           end
             
             % If there is a 20min gap between two meals, its merged as one
             % meal
@@ -93,9 +114,12 @@ x=zeros(1,length(GRID));
 x([locationsOfMeal])=1;
 % fjernet +10
 
+
+
+
 %% Splits meals into True positive and False positive
 
-xTP = zeros(1,length(x));
+xTP = x;
 xFP = zeros(1,length(x));
 
 
@@ -106,7 +130,7 @@ for i=1:length(x)
         T = 0;
         
         % For-loop for detecting if meal is a false postitive
-        for j = 1:33 
+        for j = 1:30 
 
             % Out of bound fix
             if i+j==length(x)
@@ -127,7 +151,7 @@ for i=1:length(x)
         % If no meal is found its a false postitive
         if(T == 0)
             xTP(i) = 0;
-            FP(i) = 1;
+            xFP(i) = 1;
             B = sprintf('False Positive at: %g',t(i));
             %disp(B)
         end

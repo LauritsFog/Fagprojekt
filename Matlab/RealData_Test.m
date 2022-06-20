@@ -5,8 +5,8 @@
 
 %% Init
 loadLib();
-%addpath('/Users/frederiknagel/Desktop/RealCGMData_DO_NOT_SHARE')
-addpath('G:\My Drive\Dtu\4 Semester\Fagprojekt')
+addpath('/Users/frederiknagel/Desktop/RealCGMData_DO_NOT_SHARE')
+%addpath('G:\My Drive\Dtu\4 Semester\Fagprojekt')
 Days = 3;
 InitData();
 
@@ -51,33 +51,53 @@ end
 
 %% Grid algo på real data
 
-dg=3;
-dt=1;
+dg=15;
+dt=5;
 [GF,dGF,GRID]=GridAlgo(Gsc,dg,dt,[],t);
+[xTP, xFP]=GRID_Filter(D,GRID,t);
+[M, TP, Av] = MealCorrectness(D,GRID,t*min2h,0);
+
 
 figure(4);
 subplot(211)
 for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
-    hold on
+     hold on
 end
 plot(t, Gsc,'k-');
 xlim([0 t(end)]);
-ylim([0 350]);
+ylim([min(Gsc)*0.9 max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-%title('Real Data - GRID algo')
+title('Real Data - GRID algo')
 
 subplot(212)
-plot(t, Gsc,'k-',t,GRID*350,'r-',t,correctMeal*350,'g-','LineWidth',1.5)
+hold on
+plot(t, Gsc,'k-')
+plot(t,xTP*350,'r-',t,correctMeal*350,'g-',t,xFP*350,'b:', 'LineWidth',1.2);
 xlim([0 t(end)]);
-ylim([0 350]);
+ylim([min(Gsc)*0.9 max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-legend({'CGM','Predicted Meal','Actual Meal'},'Position',[0.82 0.50 0.01 0.005])
+legend({'CGM','True positive','Actual Meal','False positive'},'Position',[0.80 0.51 0.05 0.005])
+hold off
 
-%%
 saveas(figure(4),[pwd '/Images/RealDataGRID.png']);
+%%
+
+fprintf('---------- Grid stats real data -------------- \n \n')
+procent=(sum(xTP+xFP)/nnz(D(D>0)))*100;
+A = sprintf('Total number of meals: %g',nnz(D(D>0)));
+B = sprintf('Total number of founds meals: %g',sum(xTP+xFP));
+B2 = sprintf('Total number of false positives: %g',sum(xFP));
+B1 = sprintf('Procent meals found: %g ',procent);
+C = sprintf('Average time to detect meal: %g min\n',Av);
+disp(A)
+disp(B)
+disp(B2)
+disp(B1)
+disp(C)
+
 
 %%
 
