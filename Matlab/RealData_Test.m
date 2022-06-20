@@ -5,8 +5,8 @@
 
 %% Init
 loadLib();
-%addpath('/Users/frederiknagel/Desktop/RealCGMData_DO_NOT_SHARE')
-addpath('G:\My Drive\Dtu\4 Semester\Fagprojekt')
+addpath('/Users/frederiknagel/Desktop/RealCGMData_DO_NOT_SHARE')
+%addpath('G:\My Drive\Dtu\4 Semester\Fagprojekt')
 Days = 3;
 InitData();
 
@@ -62,24 +62,25 @@ figure(4);
 subplot(211)
 for i = length(Gcrit):-1:1
     area([t0, tf]*min2h,[Gcrit(i),Gcrit(i)],'FaceColor',Gcritcolors{i},'LineStyle','none')
-    hold on
+     hold on
 end
 plot(t, Gsc,'k-');
 xlim([0 t(end)]);
-ylim([0 350]);
+ylim([min(Gsc)*0.9 max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-%title('Real Data - GRID algo')
+title('Real Data - GRID algo')
 
 subplot(212)
-%plot(t, Gsc,'k-',t,xTP*350,'r-',t,correctMeal*350,'g-',t,xFP*350,'b-')
-plot(t, Gsc,'k-',t,xTP*350,'r-',t,correctMeal*350,'g-',t,xFP*350,'b-')
+hold on
+plot(t, Gsc,'k-')
+plot(t,xTP*350,'r-',t,correctMeal*350,'g-',t,xFP*350,'b:', 'LineWidth',1.2);
 xlim([0 t(end)]);
-ylim([0 350]);
+ylim([min(Gsc)*0.9 max(Gsc)*1.1]);
 ylabel({'CGM', '[mg/dL]'});
 xlabel('Time [h]');
-legend({'CGM','True positive','Actual Meal','False positive'},'Position',[0.82 0.48 0.05 0.005])
-
+legend({'CGM','True positive','Actual Meal','False positive'},'Position',[0.80 0.51 0.05 0.005])
+hold off
 
 saveas(figure(4),[pwd '/Images/RealDataGRID.png']);
 %%
