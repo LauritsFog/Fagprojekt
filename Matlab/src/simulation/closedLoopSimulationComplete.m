@@ -98,7 +98,7 @@ Dest = zeros(1,length(tspan));
 maxMeal = 2000;
 
 % bolus scalar
-alpha = 0.25;
+alpha = 0.2;
 beta = 0.5;
 gamma = 0.1;
 

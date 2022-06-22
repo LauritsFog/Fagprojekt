@@ -287,3 +287,10 @@ subplot(3,2,6)
 histogram(Ts*mU2U*nonzeros(cell2mat(BolusPID)),n, 'Normalization', 'probability')
 xlabel("Bolus insulin sizes [U]")
 ylabel("Rate [%]")
+
+%%
+
+totalInsulin = sum(vec(cell2mat(BasalCom))) + sum(vec(cell2mat(BolusCom)));
+
+basalInsulinRatio = (sum(vec(cell2mat(BasalCom))))/totalInsulin;
+bolusInsulinRatio = (sum(vec(cell2mat(BolusCom))))/totalInsulin;
